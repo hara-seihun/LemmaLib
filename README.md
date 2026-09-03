@@ -2,7 +2,7 @@
 
 LemmaLib is a curated Lean library for reusable results that are not yet in Mathlib. It depends on Mathlib and follows its naming, documentation, and style conventions.
 
-The library contains general-purpose lemmas extracted from the former MathlibPlus collection. Problem-specific formalizations and one-off proofs are deliberately excluded.
+The library contains curated general-purpose lemmas. Problem-specific formalizations and one-off proofs are deliberately excluded.
 
 ## Build
 

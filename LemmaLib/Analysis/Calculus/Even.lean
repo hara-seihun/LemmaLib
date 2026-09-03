@@ -17,6 +17,8 @@ This file proves that an even real function has derivative zero at the origin wh
 function is differentiable there.
 -/
 
+public section
+
 /-- The derivative of an even real function at the origin is zero. -/
 theorem HasDerivAt.eq_zero_of_even {f : ℝ → ℝ} {f' : ℝ} (hf : HasDerivAt f f' 0)
     (heven : Function.Even f) : f' = 0 := by

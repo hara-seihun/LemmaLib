@@ -14,6 +14,8 @@ This file gives a diagonal construction of a separated subsequence from eventual
 separation.
 -/
 
+public section
+
 open Filter
 
 /-- If every fixed term of a sequence is eventually at distance at least `r` from its tail, then the

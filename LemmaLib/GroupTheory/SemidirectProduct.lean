@@ -13,6 +13,8 @@ public import Mathlib.GroupTheory.SemidirectProduct
 This file records normality properties of the distinguished factors of a semidirect product.
 -/
 
+public section
+
 namespace SemidirectProduct
 
 /-- The intersection of a subgroup of a semidirect product with the left factor is normal in that

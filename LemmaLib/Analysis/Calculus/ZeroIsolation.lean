@@ -14,6 +14,8 @@ A continuous real function whose endpoint values have opposite signs has an inte
 derivative never vanishes on the interval, that zero is unique.
 -/
 
+public section
+
 open Set
 
 /-- A continuous real function whose values at the endpoints have opposite signs has a zero in the

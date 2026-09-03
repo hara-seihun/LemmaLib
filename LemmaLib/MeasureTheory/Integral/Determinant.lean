@@ -15,6 +15,8 @@ This file moves independent coordinate integrals through a finite determinant. T
 rowwise forms allow each coordinate to have its own measured space.
 -/
 
+public section
+
 open scoped BigOperators
 
 namespace MeasureTheory

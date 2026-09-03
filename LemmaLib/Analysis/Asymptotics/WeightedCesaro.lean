@@ -17,6 +17,8 @@ This file proves that triangular Cesàro weighting preserves a little-o estimate
 converging to zero.
 -/
 
+public section
+
 open Filter Finset
 open scoped Topology
 

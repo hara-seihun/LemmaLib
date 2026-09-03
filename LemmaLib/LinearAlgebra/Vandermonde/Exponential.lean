@@ -17,6 +17,8 @@ This file proves that finitely many real exponentials with distinct exponents ar
 independent when sampled at consecutive natural numbers.
 -/
 
+public section
+
 namespace Matrix
 
 private theorem exp_neg_injective {n : ℕ} (t : Fin n → ℝ) (ht : Function.Injective t) :

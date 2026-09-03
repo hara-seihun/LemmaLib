@@ -16,6 +16,8 @@ the group on each ordered pair. This file defines the two-closure as a subgroup 
 closure-operator properties.
 -/
 
+public section
+
 namespace Subgroup
 
 variable {α : Type*}

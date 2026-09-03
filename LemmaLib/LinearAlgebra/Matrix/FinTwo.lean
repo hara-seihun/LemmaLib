@@ -16,6 +16,8 @@ import Mathlib.Tactic.Ring
 This file records identities special to two-by-two matrices.
 -/
 
+public section
+
 namespace Matrix
 
 /-- Every two-by-two matrix preserves the standard alternating form up to multiplication by its

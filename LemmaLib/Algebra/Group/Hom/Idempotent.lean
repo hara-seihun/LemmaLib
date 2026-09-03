@@ -14,6 +14,8 @@ This file shows that additive homomorphisms into a cancellative monoid annihilat
 idempotents.
 -/
 
+public section
+
 namespace AddMonoidHom
 
 /-- An additive homomorphism to a left-cancellative additive monoid sends every additive

@@ -14,6 +14,8 @@ public import Mathlib.Data.Matrix.Mul
 This file records properties of quadratic forms associated with skew-symmetric matrices.
 -/
 
+public section
+
 namespace Matrix
 
 /-- The quadratic form associated with a skew-symmetric matrix over a ring of characteristic zero

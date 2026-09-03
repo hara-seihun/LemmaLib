@@ -18,6 +18,8 @@ This file proves an exact finite Taylor formula for sequences valued in an addit
 group.
 -/
 
+public section
+
 open scoped BigOperators
 
 private lemma sum_secondDifference {A : Type*} [AddCommGroup A] (f : ℕ → A) (n k : ℕ) :

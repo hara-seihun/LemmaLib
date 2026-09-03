@@ -13,6 +13,8 @@ public import Mathlib.Dynamics.FixedPoints.Defs
 This file relates the range and fixed points of an idempotent function.
 -/
 
+public section
+
 open Set
 
 namespace Function

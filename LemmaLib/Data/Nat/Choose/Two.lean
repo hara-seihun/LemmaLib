@@ -14,6 +14,8 @@ This file records elementary identities for consecutive binomial coefficients wi
 two.
 -/
 
+public section
+
 namespace Nat
 
 /-- The difference between consecutive binomial coefficients with lower argument two. -/

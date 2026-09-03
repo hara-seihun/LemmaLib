@@ -13,6 +13,8 @@ public import Mathlib.Algebra.Polynomial.AlgebraMap
 This file describes how substituting `-X` changes polynomial coefficients.
 -/
 
+public section
+
 namespace Polynomial
 
 /-- Substituting `-X` multiplies the coefficient of degree `n` by `(-1) ^ n`. -/

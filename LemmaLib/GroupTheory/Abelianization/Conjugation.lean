@@ -13,6 +13,8 @@ public import Mathlib.GroupTheory.Abelianization.Defs
 Inner conjugation acts trivially after passage to the abelianization.
 -/
 
+public section
+
 namespace Abelianization
 
 /-- Conjugate elements have the same image in the abelianization. -/

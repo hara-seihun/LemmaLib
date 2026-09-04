@@ -39,10 +39,12 @@ These are the ingredients of Siegel's derivation of the Riemann–Siegel integra
 * `Complex.mordell_add_one`, `Complex.mordell_eq_mordell_sub_one_sub_one`.
 -/
 
+public section
+
 open Complex Real Set Filter Topology MeasureTheory
 
 /-- The Riemann–Siegel direction `ω = exp (π i / 4)`. -/
-noncomputable def Complex.rsOmega : ℂ := cexp (π * I / 4)
+@[expose] noncomputable def Complex.rsOmega : ℂ := cexp (π * I / 4)
 local notation "ω" => Complex.rsOmega
 
 namespace Complex
@@ -153,7 +155,7 @@ theorem two_mul_norm_sub_le_norm_sin_pi_mul (u : ℂ) (m : ℤ) (hm : |u.re - m|
 /-! ### `sin (π u) / u` -/
 
 /-- `sincPi u = sin (π u) / u`, with the removable singularity at `0` filled in by `π`. -/
-noncomputable def sincPi : ℂ → ℂ := dslope (fun u => Complex.sin (π * u)) 0
+@[expose] noncomputable def sincPi : ℂ → ℂ := dslope (fun u => Complex.sin (π * u)) 0
 
 theorem sincPi_of_ne {u : ℂ} (hu : u ≠ 0) : sincPi u = Complex.sin (π * u) / u := by
   rw [sincPi, dslope_of_ne _ hu, slope_def_field]; simp
@@ -203,15 +205,15 @@ theorem exp_sub_exp_neg_eq_two_I_sin (u : ℂ) :
   linear_combination (cexp (π * I * u) - cexp (-(π * I * u))) * Complex.I_sq
 
 /-- The quadratic exponent `π i τ u² + 2 π i u z` of the Mordell integrand. -/
-noncomputable def mordellExponent (τ z u : ℂ) : ℂ := π * I * τ * u ^ 2 + 2 * π * I * u * z
+@[expose] noncomputable def mordellExponent (τ z u : ℂ) : ℂ := π * I * τ * u ^ 2 + 2 * π * I * u * z
 
 /-- The Mordell integrand `exp (π i τ u² + 2 π i u z) / (exp (π i u) - exp (-π i u))`. -/
-noncomputable def mordellIntegrand (τ z u : ℂ) : ℂ :=
+@[expose] noncomputable def mordellIntegrand (τ z u : ℂ) : ℂ :=
   cexp (mordellExponent τ z u) / (cexp (π * I * u) - cexp (-(π * I * u)))
 
 /-- The constant in the Gaussian bound for the Mordell exponent along lines of direction `ω`
 through points of norm at most `R`. -/
-noncomputable def mordellBoundConst (τ z : ℂ) (R : ℝ) : ℝ :=
+@[expose] noncomputable def mordellBoundConst (τ z : ℂ) (R : ℝ) : ℝ :=
   (2 * π * ‖τ‖ * R + 2 * π * ‖z‖) ^ 2 / (2 * π * τ.re) + π * ‖τ‖ * R ^ 2 + 2 * π * R * ‖z‖
 
 theorem re_mordellExponent_le {τ z w : ℂ} (hτ : 0 < τ.re) {R : ℝ} (hw : ‖w‖ ≤ R) (x : ℝ) :
@@ -266,7 +268,7 @@ theorem two_mul_norm_sub_round_le_norm_sin_pi_mul (u : ℂ) :
 
 /-- `mordellS u = u / (exp (π i u) - exp (-π i u))`, with its removable singularity at `0`
 filled in. -/
-noncomputable def mordellS (u : ℂ) : ℂ := 1 / (2 * I * sincPi u)
+@[expose] noncomputable def mordellS (u : ℂ) : ℂ := 1 / (2 * I * sincPi u)
 
 theorem mordellS_zero : mordellS 0 = 1 / (2 * π * I) := by
   rw [mordellS, sincPi_zero]; ring
@@ -395,7 +397,7 @@ theorem integrable_mordellIntegrand_line {τ z : ℂ} (hτ : 0 < τ.re) {c : ℝ
 
 /-- The Mordell integral `∫ exp (π i τ u² + 2 π i u z) / (exp (π i u) - exp (-π i u)) du` along
 the line through the real point `c` in the direction `-ω = exp (5 π i / 4)`. -/
-noncomputable def mordell (τ z : ℂ) (c : ℝ) : ℂ :=
+@[expose] noncomputable def mordell (τ z : ℂ) (c : ℝ) : ℂ :=
   ∫ x : ℝ, -ω * mordellIntegrand τ z (c - ω * x)
 
 theorem mordellIntegrand_add_one_sub {τ z u : ℂ}

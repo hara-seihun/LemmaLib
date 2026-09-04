@@ -19,7 +19,18 @@ Riemann–Siegel formula on a horizontal line `Im s = T`, in terms of `‖M₀(i
   Taylor expansion of `log M₀` along the horizontal line, using `‖α'‖ ≤ 1/(2T - 6)`);
 * `norm_prefactor_le`: Stirling, `‖s(s-1)/16 Γ_ℝ(s)‖ ≤ ‖M₀ s‖ exp (1/(6 (Im s - 0.8)))`;
 * `norm_remainder_le`: `‖remainder N (σ + iT)‖ ≤ ‖M₀(iT)‖ tailK T c σ` where `c ∈ [N+1/4, N+3/4]`
-  is the line used for the integral and `tailK` is an explicit Gaussian-in-`σ` majorant.
+  is the line used for the integral and `tailK` is an explicit Gaussian-in-`σ` majorant;
+* `integral_tailK_mul_gauss`: the heat flow `∫ tailK T c (σ + √t v) gauss v dv` in closed form,
+  `tailIntegral t T c σ`;
+* `H_eq_sums_add_tails`: the Riemann–Siegel expansion of `H t (x + iy)` (Polymath (5.4)),
+  `H t (x+iy) = ∑_{n ≤ N} r t n s₋ + ∑_{n ≤ N} conj (r t n (conj s₊)) + R₋ + conj R₊`, from
+  Riemann's representation `H 0 z = ξ((1+iz)/2)/8`, the heat-kernel formula and
+  `RiemannSiegel.formula_expand`;
+* `norm_tail_le`: the tail `R₋ + conj R₊` is at most
+  `‖M₀(i x/2)‖ (tailIntegral t (x/2) c ((1-y)/2) + tailIntegral t (x/2) c ((1+y)/2))`.
+
+The numerical evaluation on the region of Theorem 1.3 is in
+`LemmaLib.NumberTheory.DeBruijnNewman.TailEstimate`.
 -/
 
 public section

@@ -24,15 +24,18 @@ In the region `0 ≤ t ≤ 1/2`, `0 ≤ y ≤ 1`, `x ≥ 200` the theorem assert
 
 `H t (x + iy) = B t (x + iy) * (f t x y + O_≤ (errAB t x y + errC0 t x y))`.
 
-The statement is recorded as the proposition `EffectiveApproximation`. It is derived in
-`LemmaLib.NumberTheory.DeBruijnNewman.EffectiveApproximation` from the two Riemann–Siegel inputs
-`RtnEstimate` and `TailEstimate` of `LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel` (Polymath
-Propositions 6.1 and 6.3). `RtnEstimate` is proved in
-`LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate`; `TailEstimate`, whose proof goes through
-Arias de Reyna's explicit remainder bounds for the Riemann–Siegel expansion, is not yet
-formalised. Everything the consumer needs on top of it is proved here: `B t` never vanishes on the region, so the nonvanishing test
-`errAB + errC0 < ‖f‖ → H t (x + iy) ≠ 0` follows, and the explicit bounds on `‖gamma‖`, `Re sStar`
-and `‖kappa‖` hold unconditionally.
+The statement with the tail error multiplied by a constant `K` is recorded as the proposition
+`EffectiveApproximationWith K`; `EffectiveApproximation` is the case `K = 1` of Polymath. It is
+derived in `LemmaLib.NumberTheory.DeBruijnNewman.EffectiveApproximation` from the two
+Riemann–Siegel inputs `RtnEstimate` and `TailEstimateWith K` of
+`LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel` (Polymath Propositions 6.1 and 6.3).
+`RtnEstimate` is proved in `LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate` and
+`TailEstimateWith 20` in `LemmaLib.NumberTheory.DeBruijnNewman.TailEstimate`, so
+`EffectiveApproximationWith 20` is a theorem (`effectiveApproximationWith`); the constant `1`
+would need Arias de Reyna's explicit remainder bounds for the Riemann–Siegel expansion.
+Everything the consumer needs on top of it is proved here: `B t` never vanishes on the region,
+so the nonvanishing test `errAB + K errC0 < ‖f‖ → H t (x + iy) ≠ 0` follows, and the explicit
+bounds on `‖gamma‖`, `Re sStar` and `‖kappa‖` hold unconditionally.
 -/
 
 public section

@@ -228,9 +228,129 @@ theorem norm_rsIntegral_le {s : ℂ} {c ρ₀ : ℝ} (hσ : 0 ≤ s.re) (hT : 0 
     _ = _ := by rw [integral_const_mul, integral_exp_quadratic hA]
 
 
+/-! ### The bound for `Re s ≤ 0` -/
+
+theorem norm_line_le (c x : ℝ) : ‖(c : ℂ) - ω * x‖ ≤ |c| + |x| := by
+  refine (norm_sub_le _ _).trans ?_
+  rw [norm_mul, norm_rsOmega, one_mul, Complex.norm_real, Complex.norm_real, Real.norm_eq_abs,
+    Real.norm_eq_abs]
+
+/-- `|u^{-s}| ≤ c^{-σ} exp (-σ |x| / c) exp (T (-y + y²/(2π)))` on the line `u = c - ω x` for
+`σ ≤ 0` and `T ≥ 0`. -/
+theorem norm_cpow_neg_line_le_of_nonpos {s : ℂ} {c : ℝ} (hσ : s.re ≤ 0) (hT : 0 ≤ s.im)
+    (hc : 0 < c) (x : ℝ) :
+    ‖((c : ℂ) - ω * x) ^ (-s)‖ ≤ c ^ (-s.re) * Real.exp (-s.re * |x| / c) *
+      Real.exp (s.im * (-(Real.sqrt 2 / 2 * x / c) + (Real.sqrt 2 / 2 * x / c) ^ 2 / (2 * π))) := by
+  rw [norm_cpow_of_ne_zero (line_ne_zero hc x), neg_re, neg_im, mul_neg, Real.exp_neg,
+    div_inv_eq_mul]
+  have h1 : ‖(c : ℂ) - ω * x‖ ^ (-s.re) ≤ c ^ (-s.re) * Real.exp (-s.re * |x| / c) := by
+    calc ‖(c : ℂ) - ω * x‖ ^ (-s.re) ≤ (c * Real.exp (|x| / c)) ^ (-s.re) := by
+          apply Real.rpow_le_rpow (norm_nonneg _) _ (by linarith)
+          refine (norm_line_le c x).trans ?_
+          rw [abs_of_pos hc]
+          have := Real.add_one_le_exp (|x| / c)
+          calc c + |x| = c * (|x| / c + 1) := by field_simp; ring
+            _ ≤ c * Real.exp (|x| / c) := by gcongr
+      _ = c ^ (-s.re) * Real.exp (-s.re * |x| / c) := by
+          rw [Real.mul_rpow hc.le (Real.exp_pos _).le, ← Real.exp_mul]
+          ring_nf
+  have h2 : Real.exp (arg ((c : ℂ) - ω * x) * s.im) ≤
+      Real.exp (s.im * (-(Real.sqrt 2 / 2 * x / c) + (Real.sqrt 2 / 2 * x / c) ^ 2 / (2 * π))) := by
+    rw [mul_comm]
+    exact Real.exp_le_exp.2 (mul_le_mul_of_nonneg_left (arg_line_le hc x) hT)
+  exact mul_le_mul h1 h2 (Real.exp_pos _).le (by positivity)
+
+/-- `λ |x| ≤ λ² / A + (A/4) x²` for `A > 0`. -/
+theorem mul_abs_le_div_add_sq {A : ℝ} (hA : 0 < A) (l x : ℝ) :
+    l * |x| ≤ l ^ 2 / A + A / 4 * x ^ 2 := by
+  have h : 0 ≤ (Real.sqrt A / 2 * |x| - l / Real.sqrt A) ^ 2 := sq_nonneg _
+  have hs : Real.sqrt A ^ 2 = A := Real.sq_sqrt hA.le
+  have hs0 : 0 < Real.sqrt A := Real.sqrt_pos.2 hA
+  have e : (Real.sqrt A / 2 * |x| - l / Real.sqrt A) ^ 2 =
+      A / 4 * x ^ 2 - l * |x| + l ^ 2 / A := by
+    have hx : |x| ^ 2 = x ^ 2 := sq_abs x
+    have hs4 : Real.sqrt A ^ 4 = A ^ 2 := by
+      rw [show (4 : ℕ) = 2 * 2 by rfl, pow_mul, hs]
+    field_simp
+    ring_nf
+    rw [hs, hs4, hx]
+    ring
+  linarith
+
+/-- The pointwise bound along the line for `σ ≤ 0`:
+`‖integrand s (c - ω x)‖ ≤ (√2/(4ρ₀)) c^{-σ} exp (σ²/(A c²)) exp (B x - (3A/4) x²)`. -/
+theorem norm_integrand_line_le_of_nonpos {s : ℂ} {c ρ₀ : ℝ} (hσ : s.re ≤ 0) (hT : 0 ≤ s.im)
+    (hc : 0 < c) (hρ₀ : 0 < ρ₀) (hcZ : ∀ m : ℤ, ρ₀ ≤ |c - m|) (hA : 0 < lineA c s.im) (x : ℝ) :
+    ‖integrand s ((c : ℂ) - ω * x)‖ ≤
+      Real.sqrt 2 / (4 * ρ₀) * (c ^ (-s.re) * Real.exp (s.re ^ 2 / (lineA c s.im * c ^ 2))) *
+        Real.exp (lineB c s.im * x - 3 / 4 * lineA c s.im * x ^ 2) := by
+  have e : integrand s ((c : ℂ) - ω * x) = ((c : ℂ) - ω * x) ^ (-s) *
+      cexp (π * I * ((c : ℂ) - ω * x) ^ 2) *
+      (cexp (π * I * ((c : ℂ) - ω * x)) - cexp (-(π * I * ((c : ℂ) - ω * x))))⁻¹ := by
+    unfold integrand kernel; ring
+  rw [e, norm_mul, norm_mul, norm_exp_pi_I_mul_sq_line]
+  have h1 := norm_cpow_neg_line_le_of_nonpos hσ hT hc x
+  have h3 := norm_inv_exp_sub_exp_neg_le hρ₀ (u := (c : ℂ) - ω * x)
+    (fun m => by rw [re_sub_im_line]; exact hcZ m)
+  have hexp : Real.exp (s.im * (-(Real.sqrt 2 / 2 * x / c) + (Real.sqrt 2 / 2 * x / c) ^ 2 /
+      (2 * π))) * Real.exp (Real.sqrt 2 * π * c * x - π * x ^ 2) =
+      Real.exp (lineB c s.im * x - lineA c s.im * x ^ 2) := by
+    rw [← Real.exp_add]
+    congr 1
+    unfold lineA lineB
+    have h2 : Real.sqrt 2 * Real.sqrt 2 = 2 := Real.mul_self_sqrt (by norm_num)
+    field_simp
+    ring_nf
+    rw [show Real.sqrt 2 ^ 2 = 2 by rw [sq, h2]]
+    ring
+  have hamgm : Real.exp (-s.re * |x| / c) * Real.exp (lineB c s.im * x - lineA c s.im * x ^ 2) ≤
+      Real.exp (s.re ^ 2 / (lineA c s.im * c ^ 2)) *
+        Real.exp (lineB c s.im * x - 3 / 4 * lineA c s.im * x ^ 2) := by
+    rw [← Real.exp_add, ← Real.exp_add]
+    apply Real.exp_le_exp.2
+    have := mul_abs_le_div_add_sq hA (-s.re / c) x
+    have e1 : (-s.re / c) ^ 2 / lineA c s.im = s.re ^ 2 / (lineA c s.im * c ^ 2) := by
+      field_simp
+    have e2 : -s.re * |x| / c = -s.re / c * |x| := by ring
+    rw [e2]
+    linarith
+  calc ‖((c : ℂ) - ω * x) ^ (-s)‖ * Real.exp (Real.sqrt 2 * π * c * x - π * x ^ 2) *
+        ‖(cexp (π * I * ((c : ℂ) - ω * x)) - cexp (-(π * I * ((c : ℂ) - ω * x))))⁻¹‖
+      ≤ c ^ (-s.re) * Real.exp (-s.re * |x| / c) *
+        Real.exp (s.im * (-(Real.sqrt 2 / 2 * x / c) + (Real.sqrt 2 / 2 * x / c) ^ 2 / (2 * π))) *
+        Real.exp (Real.sqrt 2 * π * c * x - π * x ^ 2) * (Real.sqrt 2 / (4 * ρ₀)) := by
+        gcongr
+    _ = Real.sqrt 2 / (4 * ρ₀) * c ^ (-s.re) * (Real.exp (-s.re * |x| / c) *
+        Real.exp (lineB c s.im * x - lineA c s.im * x ^ 2)) := by
+        rw [← hexp]; ring
+    _ ≤ Real.sqrt 2 / (4 * ρ₀) * c ^ (-s.re) * (Real.exp (s.re ^ 2 / (lineA c s.im * c ^ 2)) *
+        Real.exp (lineB c s.im * x - 3 / 4 * lineA c s.im * x ^ 2)) := by
+        gcongr
+    _ = _ := by ring
+
+/-- The explicit bound on the Riemann–Siegel integral for `σ ≤ 0`:
+`‖R(s, c)‖ ≤ (√2/(4ρ₀)) c^{-σ} exp (σ²/(A c²)) √(π/(3A/4)) exp (B²/(3A))`. -/
+theorem norm_rsIntegral_le_of_re_nonpos {s : ℂ} {c ρ₀ : ℝ} (hσ : s.re ≤ 0) (hT : 0 ≤ s.im)
+    (hc : 0 < c) (hρ₀ : 0 < ρ₀) (hcZ : ∀ m : ℤ, ρ₀ ≤ |c - m|) (hA : 0 < lineA c s.im) :
+    ‖rsIntegral s c‖ ≤
+      Real.sqrt 2 / (4 * ρ₀) * (c ^ (-s.re) * Real.exp (s.re ^ 2 / (lineA c s.im * c ^ 2))) *
+        (Real.sqrt (π / (3 / 4 * lineA c s.im)) *
+          Real.exp (lineB c s.im ^ 2 / (4 * (3 / 4 * lineA c s.im)))) := by
+  have hA' : 0 < 3 / 4 * lineA c s.im := by positivity
+  unfold rsIntegral
+  calc ‖∫ x : ℝ, -ω * integrand s ((c : ℂ) - ω * x)‖
+      ≤ ∫ x : ℝ, Real.sqrt 2 / (4 * ρ₀) *
+          (c ^ (-s.re) * Real.exp (s.re ^ 2 / (lineA c s.im * c ^ 2))) *
+          Real.exp (lineB c s.im * x - 3 / 4 * lineA c s.im * x ^ 2) := by
+        refine norm_integral_le_of_norm_le ((integrable_exp_quadratic hA' _).const_mul _)
+          (Filter.Eventually.of_forall fun x => ?_)
+        rw [norm_mul, norm_neg, norm_rsOmega, one_mul]
+        exact norm_integrand_line_le_of_nonpos hσ hT hc hρ₀ hcZ hA x
+    _ = _ := by rw [integral_const_mul, integral_exp_quadratic hA']
+
 /-! ### Independence of the line within `(n, n + 1)` -/
 
-theorem strip_dist_of_mem_Ioo {c c' : ℝ} {n : ℕ} (hcn : (n : ℝ) < c) (hc'n : c' < n + 1) :
+theorem strip_dist_of_mem_Ioo (c c' : ℝ) (n : ℕ) :
     ∀ κ ∈ Icc c c', ∀ m : ℤ, min (c - n) (n + 1 - c') ≤ |κ - m| := by
   intro κ hκ m
   rcases le_or_gt m n with h | h
@@ -275,7 +395,7 @@ theorem rsIntegral_eq_of_mem_Ioo (s : ℂ) {c c' : ℝ} {n : ℕ} (hcn : (n : �
   set ρ := min (c - n) (n + 1 - c') with hρ
   have hρ0 : 0 < ρ := lt_min (by linarith) (by linarith)
   have hc0 : 0 < c := by linarith [(Nat.cast_nonneg n : (0 : ℝ) ≤ n)]
-  have hstrip := strip_dist_of_mem_Ioo hcn hc'n
+  have hstrip := strip_dist_of_mem_Ioo c c' n
   unfold rsIntegral
   refine (integral_rsLine_eq (C := boundConst |s.re| |s.im| c c' ρ) hcc' Real.pi_pos
     (fun u hu => ?_) (fun u hu => ?_)).symm

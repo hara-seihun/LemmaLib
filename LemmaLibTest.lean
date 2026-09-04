@@ -25,3 +25,4 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check DeBruijnNewman.H_ne_zero_of_lt_norm_f'
 #check exists_strictMono_dist_ge
 #check DeBruijnNewman.H_zero_eq_xi
+#check DeBruijnNewman.H_eq_integral_H_zero

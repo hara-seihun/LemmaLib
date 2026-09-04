@@ -29,7 +29,7 @@ representation of `Λ₀` (`completedRiemannZeta₀_eq_integral`). No analytic c
 both sides are computed directly for every `z`.
 -/
 
-public section
+@[expose] public section
 
 open Real Set Filter Topology MeasureTheory
 
@@ -65,11 +65,14 @@ lemma norm_sin_le (w : ℂ) : ‖Complex.sin w‖ ≤ Real.exp |w.im| := by
   have e2 : Real.exp w.im ≤ Real.exp |w.im| := Real.exp_le_exp.mpr (le_abs_self _)
   linarith
 
-lemma norm_cos_mul_le (z : ℂ) {u : ℝ} (hu : 0 ≤ u) :
-    ‖Complex.cos (z * u)‖ ≤ Real.exp (|z.im| * u) := by
+lemma norm_cos_mul_le' (z : ℂ) (u : ℝ) : ‖Complex.cos (z * u)‖ ≤ Real.exp (|z.im| * |u|) := by
   refine (norm_cos_le _).trans (le_of_eq ?_)
   congr 1
-  simp [abs_mul, abs_of_nonneg hu]
+  simp [abs_mul]
+
+lemma norm_cos_mul_le (z : ℂ) {u : ℝ} (hu : 0 ≤ u) :
+    ‖Complex.cos (z * u)‖ ≤ Real.exp (|z.im| * u) := by
+  simpa [abs_of_nonneg hu] using norm_cos_mul_le' z u
 
 lemma norm_sin_mul_le (z : ℂ) {u : ℝ} (hu : 0 ≤ u) :
     ‖Complex.sin (z * u)‖ ≤ Real.exp (|z.im| * u) := by
@@ -92,7 +95,8 @@ lemma norm_mul_le_exp_neg {t b u : ℝ} (ht : 0 ≤ t) (hb : 0 ≤ b) (hu : 0 �
     _ = _ := by ring
 
 /-- Continuous functions dominated by `A e^{-u}` on `u ≥ 0` are integrable on `Ioi 0`. -/
-lemma integrableOn_Ioi_of_le_exp_neg {F : ℝ → ℂ} (hF : Continuous F) {A : ℝ}
+lemma integrableOn_Ioi_of_le_exp_neg {E : Type*} [NormedAddCommGroup E] {F : ℝ → E}
+    (hF : Continuous F) {A : ℝ}
     (h : ∀ u, 0 ≤ u → ‖F u‖ ≤ A * Real.exp (-u)) : IntegrableOn F (Ioi 0) := by
   refine Integrable.mono' ((integrableOn_exp_neg_Ioi 0).const_mul A)
     hF.aestronglyMeasurable.restrict ?_

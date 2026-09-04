@@ -22,6 +22,7 @@ public import LemmaLib.Logic.Function.Idempotent
 public import LemmaLib.MeasureTheory.Integral.Determinant
 public import LemmaLib.NumberTheory.DeBruijnNewman.Basic
 public import LemmaLib.NumberTheory.DeBruijnNewman.EffectiveModel
+public import LemmaLib.NumberTheory.DeBruijnNewman.Heat
 public import LemmaLib.NumberTheory.DeBruijnNewman.Kernel
 public import LemmaLib.NumberTheory.DeBruijnNewman.Theta
 public import LemmaLib.NumberTheory.DeBruijnNewman.Xi

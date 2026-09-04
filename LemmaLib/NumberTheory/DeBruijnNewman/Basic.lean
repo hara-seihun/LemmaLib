@@ -28,7 +28,7 @@ These definitions are the ones registered against the de Bruijn–Newman problem
 are repeated here verbatim so that later results can be stated about the same object.
 -/
 
-public section
+@[expose] public section
 
 open Real
 

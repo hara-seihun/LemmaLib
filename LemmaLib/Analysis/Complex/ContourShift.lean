@@ -449,4 +449,30 @@ theorem integral_div_sub_add_ofReal_mul_I_sub_integral_div_sub {N : ℂ → ℂ}
   rw [htop, hbot, hΨtop, hΨbot] at hshift
   linear_combination hshift
 
+/-- The residue theorem for the strip `β ≤ Im v ≤ 0` with `β < 0`: crossing the pole from below
+reverses the sign. -/
+theorem integral_div_sub_add_ofReal_mul_I_sub_integral_div_sub_of_neg {N : ℂ → ℂ} {p : ℂ}
+    {β a C : ℝ} (ha : 0 < a) (hβp : β < p.im) (hp0 : p.im < 0)
+    (hN : ∀ v : ℂ, v.im ∈ Icc β 0 → DifferentiableAt ℂ N v)
+    (hbound : ∀ v : ℂ, v.im ∈ Icc β 0 → ‖N v‖ ≤ C * Real.exp (-a * v.re ^ 2)) :
+    (∫ x : ℝ, N (x + β * I) / (x + β * I - p)) - ∫ x : ℝ, N x / (x - p) = 2 * π * I * N p := by
+  have key := integral_div_sub_add_ofReal_mul_I_sub_integral_div_sub (N := fun v => N (v + β * I))
+    (p := p - β * I) (β := -β) (a := a) (C := C) ha (by simp; linarith) (by simp; linarith)
+    (fun v hv => by
+      refine (hN (v + β * I) ?_).comp v ((differentiableAt_id).add_const _)
+      simp at hv ⊢; constructor <;> linarith [hv.1, hv.2])
+    (fun v hv => by
+      have := hbound (v + β * I) (by simp at hv ⊢; constructor <;> linarith [hv.1, hv.2])
+      simpa using this)
+  have e1 : (fun x : ℝ => N ((x : ℂ) + ((-β : ℝ) : ℂ) * I + β * I) /
+      ((x : ℂ) + ((-β : ℝ) : ℂ) * I - (p - β * I))) = fun x : ℝ => N x / (x - p) := by
+    ext x; push_cast
+    rw [show (x : ℂ) + -(β : ℂ) * I + β * I = x by ring,
+      show (x : ℂ) + -(β : ℂ) * I - (p - β * I) = x - p by ring]
+  have e2 : (fun x : ℝ => N ((x : ℂ) + β * I) / ((x : ℂ) - (p - β * I))) =
+      fun x : ℝ => N (x + β * I) / (x + β * I - p) := by
+    ext x; rw [show (x : ℂ) - (p - β * I) = x + β * I - p by ring]
+  rw [e1, e2, show p - β * I + β * I = p by ring] at key
+  linear_combination -key
+
 end Complex

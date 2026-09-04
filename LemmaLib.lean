@@ -12,6 +12,7 @@ public import LemmaLib.Analysis.Asymptotics.WeightedCesaro
 public import LemmaLib.Analysis.Calculus.Even
 public import LemmaLib.Analysis.Calculus.ZeroIsolation
 public import LemmaLib.Analysis.Complex.ContourShift
+public import LemmaLib.Analysis.Complex.MordellIntegral
 public import LemmaLib.Analysis.EulerMaclaurin
 public import LemmaLib.Analysis.SpecialFunctions.Gamma.Stirling
 public import LemmaLib.Data.Nat.Choose.Two

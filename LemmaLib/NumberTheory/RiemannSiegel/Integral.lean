@@ -111,29 +111,20 @@ theorem mul_abs_sub_le (M y : ℝ) : M * |y| - 2 * π * y ^ 2 ≤ M ^ 2 / (4 * �
 
 /-! ### The Gaussian bound on strips -/
 
+/-- The constant of the Gaussian bound `norm_cpow_mul_exp_le` for `u^{-s} e^{iπu²}` on the strip
+`c ≤ Re u - Im u ≤ c'`, for `|Re s| ≤ σ₀` and `|Im s| ≤ θ₀`. -/
+@[expose] noncomputable def gaussConst (σ₀ θ₀ c c' : ℝ) : ℝ :=
+  Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + (2 * σ₀ + 2 * π * c') ^ 2 / (4 * π))
+
+theorem gaussConst_pos (σ₀ θ₀ c c' : ℝ) : 0 < gaussConst σ₀ θ₀ c c' := Real.exp_pos _
+
 /-- The constant of the Gaussian bound `norm_integrand_le` on the strip `c ≤ Re u - Im u ≤ c'`,
 for `|Re s| ≤ σ₀`, `|Im s| ≤ θ₀` and lines at distance `≥ ρ` from the integers. -/
 @[expose] noncomputable def boundConst (σ₀ θ₀ c c' ρ : ℝ) : ℝ :=
-  Real.sqrt 2 / (4 * ρ) *
-    Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + (2 * σ₀ + 2 * π * c') ^ 2 / (4 * π))
+  Real.sqrt 2 / (4 * ρ) * gaussConst σ₀ θ₀ c c'
 
 theorem boundConst_nonneg {σ₀ θ₀ c c' ρ : ℝ} (hρ : 0 < ρ) : 0 ≤ boundConst σ₀ θ₀ c c' ρ := by
-  unfold boundConst; positivity
-
-theorem boundConst_mono {σ₀ θ₀ c c' ρ σ₀' θ₀' : ℝ} (hρ : 0 < ρ) (hc : 0 < c) (hcc' : c ≤ c')
-    (hσ₀0 : 0 ≤ σ₀) (hσ₀ : σ₀ ≤ σ₀') (hθ₀ : θ₀ ≤ θ₀') :
-    boundConst σ₀ θ₀ c c' ρ ≤ boundConst σ₀' θ₀' c c' ρ := by
-  unfold boundConst
-  have hπ := Real.pi_pos
-  have hc' : 0 < c' := hc.trans_le hcc'
-  have hX : 0 ≤ c' + Real.sqrt 2 / c := by positivity
-  have h1 : 0 ≤ 2 * σ₀ + 2 * π * c' := by positivity
-  have h2 : 2 * σ₀ + 2 * π * c' ≤ 2 * σ₀' + 2 * π * c' := by linarith
-  have h3 : (2 * σ₀ + 2 * π * c') ^ 2 ≤ (2 * σ₀' + 2 * π * c') ^ 2 := by gcongr
-  have h4 : σ₀ * (c' + Real.sqrt 2 / c) ≤ σ₀' * (c' + Real.sqrt 2 / c) := by gcongr
-  have h5 : (2 * σ₀ + 2 * π * c') ^ 2 / (4 * π) ≤ (2 * σ₀' + 2 * π * c') ^ 2 / (4 * π) := by
-    gcongr
-  gcongr
+  unfold boundConst gaussConst; positivity
 
 /-- The point `u` lies in `slitPlane` when `0 < Re u - Im u`. -/
 theorem mem_slitPlane_of_re_sub_im_pos {u : ℂ} (hu : 0 < u.re - u.im) : u ∈ slitPlane := by
@@ -145,65 +136,52 @@ theorem mem_slitPlane_of_re_sub_im_pos {u : ℂ} (hu : 0 < u.re - u.im) : u ∈ 
 theorem ne_zero_of_re_sub_im_pos {u : ℂ} (hu : 0 < u.re - u.im) : u ≠ 0 := by
   intro h; rw [h] at hu; simp at hu
 
-/-- The Riemann–Siegel kernel is bounded by `√2 / (4 ρ)` on a strip whose lines stay at
-distance `≥ ρ` from the integers. -/
-theorem norm_kernel_le {u : ℂ} {ρ : ℝ} (hρ : 0 < ρ) (hu : ∀ m : ℤ, ρ ≤ |u.re - u.im - m|) :
-    ‖kernel u‖ ≤ Real.sqrt 2 / (4 * ρ) * Real.exp (-(2 * π) * u.re * u.im) := by
-  unfold kernel
-  rw [exp_sub_exp_neg_eq_two_I_sin, norm_div, norm_exp_pi_I_mul_sq, norm_mul, norm_mul,
-    Complex.norm_two, Complex.norm_I, mul_one]
-  set m : ℤ := round u.re with hm
-  have hre : |u.re - m| ≤ 1 / 2 := by rw [hm]; exact abs_sub_round u.re
-  have h1 := two_mul_norm_sub_le_norm_sin_pi_mul u m hre
-  have h2 : ρ ≤ Real.sqrt 2 * ‖u - m‖ := by
-    refine (hu m).trans ?_
-    have := abs_re_sub_im_le_sqrt_two_mul_norm (u - m)
-    rwa [sub_re, sub_im, Complex.intCast_re, Complex.intCast_im, sub_zero, sub_right_comm]
-      at this
-  have hs2 : 0 < Real.sqrt 2 := by positivity
-  have hsin : 0 < ‖Complex.sin (π * u)‖ := by
-    have : 0 < ‖u - m‖ := by nlinarith
-    linarith
-  rw [div_le_iff₀ (by positivity)]
-  have hE := Real.exp_pos (-(2 * π) * u.re * u.im)
-  have h3 : 1 ≤ Real.sqrt 2 / (4 * ρ) * (2 * ‖Complex.sin (π * u)‖) := by
-    rw [div_mul_eq_mul_div, le_div_iff₀ (by positivity)]
-    nlinarith
-  calc Real.exp (-(2 * π) * u.re * u.im) = Real.exp (-(2 * π) * u.re * u.im) * 1 := (mul_one _).symm
-    _ ≤ Real.exp (-(2 * π) * u.re * u.im) *
-        (Real.sqrt 2 / (4 * ρ) * (2 * ‖Complex.sin (π * u)‖)) := by gcongr
-    _ = _ := by ring
+/-- Bounds on `‖u‖` on the strip `c ≤ Re u - Im u ≤ c'`. -/
+theorem norm_bounds_of_strip {u : ℂ} {c c' : ℝ} (hc : 0 < c) (hu : u.re - u.im ∈ Icc c c') :
+    1 / ‖u‖ ≤ Real.sqrt 2 / c ∧ ‖u‖ ≤ c' + 2 * |u.im| := by
+  have hκ0 : 0 < u.re - u.im := hc.trans_le hu.1
+  have hnorm0 : 0 < ‖u‖ := norm_pos_iff.2 (ne_zero_of_re_sub_im_pos hκ0)
+  have hlow : u.re - u.im ≤ Real.sqrt 2 * ‖u‖ := by
+    have := abs_re_sub_im_le_sqrt_two_mul_norm u
+    rwa [abs_of_pos hκ0] at this
+  constructor
+  · rw [div_le_div_iff₀ hnorm0 hc]
+    nlinarith [hu.1]
+  · have := norm_le_abs_re_sub_im_add u
+    rw [abs_of_pos hκ0] at this
+    linarith [hu.2]
 
-/-- The Gaussian bound on the strip `c ≤ Re u - Im u ≤ c'`:
-`‖integrand s u‖ ≤ boundConst σ₀ θ₀ c c' ρ * exp (-π (Im u)²)` when `|Re s| ≤ σ₀`, `|Im s| ≤ θ₀`,
-`0 < c` and every `κ ∈ [c, c']` is at distance `≥ ρ` from the integers. -/
-theorem norm_integrand_le {s u : ℂ} {σ₀ θ₀ c c' ρ : ℝ} (hσ₀ : |s.re| ≤ σ₀) (hθ₀ : |s.im| ≤ θ₀)
-    (hc : 0 < c) (hρ : 0 < ρ) (hstrip : ∀ κ ∈ Icc c c', ∀ m : ℤ, ρ ≤ |κ - m|)
-    (hu : u.re - u.im ∈ Icc c c') :
-    ‖integrand s u‖ ≤ boundConst σ₀ θ₀ c c' ρ * Real.exp (-π * u.im ^ 2) := by
+/-- `‖e^{iπu²}‖ ≤ exp (2 π c' |Im u| - 2 π (Im u)²)` on the strip `c ≤ Re u - Im u ≤ c'`. -/
+theorem norm_exp_pi_I_mul_sq_le {u : ℂ} {c c' : ℝ} (hc : 0 < c) (hu : u.re - u.im ∈ Icc c c') :
+    ‖cexp (π * I * u ^ 2)‖ ≤ Real.exp (2 * π * c' * |u.im| - 2 * π * u.im ^ 2) := by
+  rw [norm_exp_pi_I_mul_sq]
+  apply Real.exp_le_exp.2
   set κ := u.re - u.im with hκ
+  have hκ0 : 0 < κ := hc.trans_le hu.1
+  have hre : u.re = u.im + κ := by rw [hκ]; ring
+  rw [hre]
+  have h1 : -(2 * π) * κ * u.im ≤ 2 * π * c' * |u.im| := by
+    have : -(2 * π) * κ * u.im ≤ |2 * π * κ * u.im| := by
+      rw [show -(2 * π) * κ * u.im = -(2 * π * κ * u.im) by ring]; exact neg_le_abs _
+    refine this.trans ?_
+    rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 * π * κ)]
+    gcongr
+    exact hu.2
+  nlinarith
+
+/-- The Gaussian bound for `u^{-s} e^{iπu²}` on the strip `c ≤ Re u - Im u ≤ c'`. -/
+theorem norm_cpow_mul_exp_le {s u : ℂ} {σ₀ θ₀ c c' : ℝ} (hσ₀ : |s.re| ≤ σ₀) (hθ₀ : |s.im| ≤ θ₀)
+    (hc : 0 < c) (hu : u.re - u.im ∈ Icc c c') :
+    ‖u ^ (-s) * cexp (π * I * u ^ 2)‖ ≤ gaussConst σ₀ θ₀ c c' * Real.exp (-π * u.im ^ 2) := by
   set y := u.im with hy
-  have hκc : c ≤ κ := hu.1
-  have hκc' : κ ≤ c' := hu.2
-  have hκ0 : 0 < κ := hc.trans_le hκc
+  have hκ0 : 0 < u.re - u.im := hc.trans_le hu.1
   have hu0 : u ≠ 0 := ne_zero_of_re_sub_im_pos hκ0
   have hnorm0 : 0 < ‖u‖ := norm_pos_iff.2 hu0
-  have hs2 : 0 < Real.sqrt 2 := by positivity
-  -- bounds on `‖u‖`
-  have hlow : κ ≤ Real.sqrt 2 * ‖u‖ := by
-    have := abs_re_sub_im_le_sqrt_two_mul_norm u
-    rwa [← hκ, abs_of_pos hκ0] at this
-  have hinv : 1 / ‖u‖ ≤ Real.sqrt 2 / c := by
-    rw [div_le_div_iff₀ hnorm0 hc]
-    nlinarith
-  have hup : ‖u‖ ≤ c' + 2 * |y| := by
-    have := norm_le_abs_re_sub_im_add u
-    rw [← hκ, abs_of_pos hκ0] at this
-    linarith
-  -- the power
-  have hpow : ‖u ^ (-s)‖ ≤ Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + 2 * σ₀ * |y|) := by
+  obtain ⟨hinv, hup⟩ := norm_bounds_of_strip hc hu
+  have hσ₀0 : 0 ≤ σ₀ := (abs_nonneg _).trans hσ₀
+  have hpow : ‖u ^ (-s)‖ ≤
+      Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + 2 * σ₀ * |y|) := by
     refine (norm_cpow_neg_le hu0 s).trans ?_
-    have hσ₀0 : 0 ≤ σ₀ := (abs_nonneg _).trans hσ₀
     calc ‖u‖ ^ (-s.re) * Real.exp (π * |s.im|)
         ≤ Real.exp (|s.re| * (‖u‖ + 1 / ‖u‖)) * Real.exp (π * |s.im|) :=
           mul_le_mul_of_nonneg_right (rpow_neg_le_exp hnorm0) (Real.exp_pos _).le
@@ -217,44 +195,62 @@ theorem norm_integrand_le {s u : ℂ} {σ₀ θ₀ c c' ρ : ℝ} (hσ₀ : |s.r
             (Real.exp_pos _).le
       _ = Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + 2 * σ₀ * |y|) := by
           rw [← Real.exp_add]; congr 1; ring
-  -- the kernel
-  have hker := norm_kernel_le hρ (fun m => hstrip κ hu m)
-  have hre : u.re = y + κ := by rw [hκ, hy]; ring
-  have hgauss : -(2 * π) * u.re * u.im ≤ 2 * π * c' * |y| - 2 * π * y ^ 2 := by
-    rw [hre]
-    have : -(2 * π) * (y + κ) * y = -(2 * π) * κ * y - 2 * π * y ^ 2 := by ring
-    rw [this]
-    have h1 : -(2 * π) * κ * y ≤ 2 * π * c' * |y| := by
-      have : -(2 * π) * κ * y ≤ |2 * π * κ * y| := by
-        rw [show -(2 * π) * κ * y = -(2 * π * κ * y) by ring]; exact neg_le_abs _
-      refine this.trans ?_
-      rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 * π * κ)]
-      gcongr
-    linarith
-  -- combine
-  unfold integrand
+  have hexp := norm_exp_pi_I_mul_sq_le hc hu
   rw [norm_mul]
-  have hσ₀0 : 0 ≤ σ₀ := (abs_nonneg _).trans hσ₀
-  have hker' : ‖kernel u‖ ≤ Real.sqrt 2 / (4 * ρ) * Real.exp (2 * π * c' * |y| - 2 * π * y ^ 2) := by
-    refine hker.trans ?_
-    gcongr
-  calc ‖u ^ (-s)‖ * ‖kernel u‖
+  calc ‖u ^ (-s)‖ * ‖cexp (π * I * u ^ 2)‖
       ≤ Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + 2 * σ₀ * |y|) *
-          (Real.sqrt 2 / (4 * ρ) * Real.exp (2 * π * c' * |y| - 2 * π * y ^ 2)) := by
-        gcongr
-    _ = Real.sqrt 2 / (4 * ρ) * (Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + 2 * σ₀ * |y|) *
-          Real.exp (2 * π * c' * |y| - 2 * π * y ^ 2)) := by ring
-    _ = Real.sqrt 2 / (4 * ρ) * Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) +
+          Real.exp (2 * π * c' * |y| - 2 * π * y ^ 2) := by gcongr
+    _ = Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) +
           ((2 * σ₀ + 2 * π * c') * |y| - 2 * π * y ^ 2)) := by
-        rw [← Real.exp_add]; congr 2; ring
-    _ ≤ Real.sqrt 2 / (4 * ρ) * Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) +
+        rw [← Real.exp_add]; congr 1; ring
+    _ ≤ Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) +
           ((2 * σ₀ + 2 * π * c') ^ 2 / (4 * π) - π * y ^ 2)) := by
-        refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.2 ?_) (by positivity)
+        apply Real.exp_le_exp.2
         linarith [mul_abs_sub_le (2 * σ₀ + 2 * π * c') y]
-    _ = boundConst σ₀ θ₀ c c' ρ * Real.exp (-π * u.im ^ 2) := by
-        unfold boundConst
-        rw [← hy, mul_assoc (Real.sqrt 2 / (4 * ρ)), ← Real.exp_add]
-        congr 2; ring
+    _ = gaussConst σ₀ θ₀ c c' * Real.exp (-π * u.im ^ 2) := by
+        unfold gaussConst
+        rw [← hy, ← Real.exp_add]
+        congr 1; ring
+
+/-- `‖1 / (e^{iπu} - e^{-iπu})‖ ≤ √2 / (4 ρ)` when `Re u - Im u` is at distance `≥ ρ` from the
+integers. -/
+theorem norm_inv_exp_sub_exp_neg_le {u : ℂ} {ρ : ℝ} (hρ : 0 < ρ)
+    (hu : ∀ m : ℤ, ρ ≤ |u.re - u.im - m|) :
+    ‖(cexp (π * I * u) - cexp (-(π * I * u)))⁻¹‖ ≤ Real.sqrt 2 / (4 * ρ) := by
+  rw [exp_sub_exp_neg_eq_two_I_sin, norm_inv, norm_mul, norm_mul, Complex.norm_two, Complex.norm_I,
+    mul_one]
+  set m : ℤ := round u.re with hm
+  have hre : |u.re - m| ≤ 1 / 2 := by rw [hm]; exact abs_sub_round u.re
+  have h1 := two_mul_norm_sub_le_norm_sin_pi_mul u m hre
+  have h2 : ρ ≤ Real.sqrt 2 * ‖u - m‖ := by
+    refine (hu m).trans ?_
+    have := abs_re_sub_im_le_sqrt_two_mul_norm (u - m)
+    rwa [sub_re, sub_im, Complex.intCast_re, Complex.intCast_im, sub_zero, sub_right_comm]
+      at this
+  have hs2 : 0 < Real.sqrt 2 := by positivity
+  have hsin : 0 < ‖Complex.sin (π * u)‖ := by
+    have : 0 < ‖u - m‖ := by nlinarith
+    linarith
+  rw [inv_le_comm₀ (by positivity) (by positivity), inv_div, div_le_iff₀ hs2]
+  nlinarith
+
+/-- The Gaussian bound on the strip `c ≤ Re u - Im u ≤ c'`:
+`‖integrand s u‖ ≤ boundConst σ₀ θ₀ c c' ρ * exp (-π (Im u)²)` when `|Re s| ≤ σ₀`, `|Im s| ≤ θ₀`,
+`0 < c` and every `κ ∈ [c, c']` is at distance `≥ ρ` from the integers. -/
+theorem norm_integrand_le {s u : ℂ} {σ₀ θ₀ c c' ρ : ℝ} (hσ₀ : |s.re| ≤ σ₀) (hθ₀ : |s.im| ≤ θ₀)
+    (hc : 0 < c) (hρ : 0 < ρ) (hstrip : ∀ κ ∈ Icc c c', ∀ m : ℤ, ρ ≤ |κ - m|)
+    (hu : u.re - u.im ∈ Icc c c') :
+    ‖integrand s u‖ ≤ boundConst σ₀ θ₀ c c' ρ * Real.exp (-π * u.im ^ 2) := by
+  have h1 := norm_cpow_mul_exp_le hσ₀ hθ₀ hc hu
+  have h2 := norm_inv_exp_sub_exp_neg_le hρ (hstrip _ hu)
+  have e : integrand s u = u ^ (-s) * cexp (π * I * u ^ 2) *
+      (cexp (π * I * u) - cexp (-(π * I * u)))⁻¹ := by
+    unfold integrand kernel; ring
+  rw [e, norm_mul]
+  calc ‖u ^ (-s) * cexp (π * I * u ^ 2)‖ * ‖(cexp (π * I * u) - cexp (-(π * I * u)))⁻¹‖
+      ≤ gaussConst σ₀ θ₀ c c' * Real.exp (-π * u.im ^ 2) * (Real.sqrt 2 / (4 * ρ)) :=
+        mul_le_mul h1 h2 (norm_nonneg _) (by have := gaussConst_pos σ₀ θ₀ c c'; positivity)
+    _ = boundConst σ₀ θ₀ c c' ρ * Real.exp (-π * u.im ^ 2) := by unfold boundConst; ring
 
 /-! ### The lines `u = c - ω x` -/
 

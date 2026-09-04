@@ -34,3 +34,5 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check Complex.integral_add_eq_integral
 #check EulerMaclaurin.sum_eq_integral_add
 #check Complex.Stirling.exists_Gamma_eq_sqrt_two_pi_mul_exp
+#check Complex.mordell_one
+#check Complex.integral_rsLine_sub_eq_of_pole

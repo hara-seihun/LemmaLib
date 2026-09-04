@@ -256,4 +256,167 @@ theorem norm_integrand_le {s u : ℂ} {σ₀ θ₀ c c' ρ : ℝ} (hσ₀ : |s.r
         rw [← hy, mul_assoc (Real.sqrt 2 / (4 * ρ)), ← Real.exp_add]
         congr 2; ring
 
+/-! ### The lines `u = c - ω x` -/
+
+theorem re_sub_im_line (c x : ℝ) : ((c : ℂ) - ω * x).re - ((c : ℂ) - ω * x).im = c := by
+  rw [re_sub_im_sub_rsOmega_mul]; simp
+
+theorem im_line (c x : ℝ) : ((c : ℂ) - ω * x).im = -(Real.sqrt 2 / 2) * x := by
+  rw [im_sub_rsOmega_mul]; simp
+
+theorem im_line_sq (c x : ℝ) : ((c : ℂ) - ω * x).im ^ 2 = x ^ 2 / 2 := by
+  rw [im_line, mul_pow, neg_sq, sqrt_two_div_two_sq]; ring
+
+theorem abs_im_line_le (c x : ℝ) : |((c : ℂ) - ω * x).im| ≤ |x| := by
+  rw [im_line, abs_mul, abs_neg, abs_of_pos (by positivity : (0 : ℝ) < Real.sqrt 2 / 2)]
+  have h1 : Real.sqrt 2 / 2 ≤ 1 := by
+    have : Real.sqrt 2 ≤ 2 := by
+      rw [Real.sqrt_le_left (by norm_num)]; norm_num
+    linarith
+  have := abs_nonneg x
+  nlinarith
+
+theorem line_mem_slitPlane {c : ℝ} (hc0 : 0 < c) (x : ℝ) : (c : ℂ) - ω * x ∈ slitPlane :=
+  mem_slitPlane_of_re_sub_im_pos (by rw [re_sub_im_line]; exact hc0)
+
+theorem line_ne_zero {c : ℝ} (hc0 : 0 < c) (x : ℝ) : (c : ℂ) - ω * x ≠ 0 :=
+  ne_zero_of_re_sub_im_pos (by rw [re_sub_im_line]; exact hc0)
+
+theorem continuous_integrand_line (s : ℂ) {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c ≠ n) :
+    Continuous fun x : ℝ => integrand s (c - ω * x) := by
+  unfold integrand kernel
+  refine Continuous.mul ?_
+    (Continuous.div (by fun_prop) (by fun_prop) (mordell_denom_line_ne_zero hc))
+  refine continuous_iff_continuousAt.2 fun x => ?_
+  have hf : ContinuousAt (fun x : ℝ => (c : ℂ) - ω * x) x := by fun_prop
+  exact ContinuousAt.comp (g := fun u : ℂ => u ^ (-s))
+    (continuousAt_cpow_const (line_mem_slitPlane hc0 x)) hf
+
+theorem continuous_log_line {c : ℝ} (hc0 : 0 < c) :
+    Continuous fun x : ℝ => Complex.log (c - ω * x) := by
+  refine continuous_iff_continuousAt.2 fun x => ?_
+  have hf : ContinuousAt (fun x : ℝ => (c : ℂ) - ω * x) x := by fun_prop
+  exact ContinuousAt.comp (g := Complex.log) (continuousAt_clog (line_mem_slitPlane hc0 x)) hf
+
+theorem strip_dist_line (c : ℝ) : ∀ κ ∈ Icc c c, ∀ m : ℤ, |c - round c| ≤ |κ - m| := by
+  intro κ hκ m
+  rw [Icc_self, mem_singleton_iff] at hκ
+  rw [hκ]; exact round_le c m
+
+theorem norm_integrand_line_le {s : ℂ} {σ₀ θ₀ : ℝ} (hσ₀ : |s.re| ≤ σ₀) (hθ₀ : |s.im| ≤ θ₀)
+    {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c ≠ n) (x : ℝ) :
+    ‖integrand s (c - ω * x)‖ ≤
+      boundConst σ₀ θ₀ c c |c - round c| * Real.exp (-(π / 2) * x ^ 2) := by
+  have := norm_integrand_le hσ₀ hθ₀ hc0 (dist_round_pos hc) (strip_dist_line c)
+    (u := c - ω * x) (by rw [re_sub_im_line]; exact ⟨le_rfl, le_rfl⟩)
+  rwa [im_line_sq, show -π * (x ^ 2 / 2) = -(π / 2) * x ^ 2 by ring] at this
+
+theorem integrable_integrand_line (s : ℂ) {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c ≠ n) :
+    Integrable fun x : ℝ => integrand s (c - ω * x) :=
+  integrable_of_norm_le_gaussian (by positivity) (continuous_integrand_line s hc0 hc)
+    (norm_integrand_line_le le_rfl le_rfl hc0 hc)
+
+/-! ### Differentiability in `s` -/
+
+theorem norm_log_le_of_strip {u : ℂ} {c c' : ℝ} (hc : 0 < c) (hu : u.re - u.im ∈ Icc c c') :
+    ‖Complex.log u‖ ≤ c' + Real.sqrt 2 / c + π + 2 * |u.im| := by
+  have hκ0 : 0 < u.re - u.im := hc.trans_le hu.1
+  have hu0 := ne_zero_of_re_sub_im_pos hκ0
+  have hnorm0 : 0 < ‖u‖ := norm_pos_iff.2 hu0
+  refine (Complex.norm_le_abs_re_add_abs_im _).trans ?_
+  rw [Complex.log_re, Complex.log_im]
+  have h1 := abs_log_le_add_inv hnorm0
+  have h2 := Complex.abs_arg_le_pi u
+  have hlow : u.re - u.im ≤ Real.sqrt 2 * ‖u‖ := by
+    have := abs_re_sub_im_le_sqrt_two_mul_norm u
+    rwa [abs_of_pos hκ0] at this
+  have hinv : 1 / ‖u‖ ≤ Real.sqrt 2 / c := by
+    rw [div_le_div_iff₀ hnorm0 hc]
+    nlinarith [hu.1]
+  have hup : ‖u‖ ≤ c' + 2 * |u.im| := by
+    have := norm_le_abs_re_sub_im_add u
+    rw [abs_of_pos hκ0] at this
+    linarith [hu.2]
+  linarith
+
+theorem hasDerivAt_integrand {u : ℂ} (hu : u ≠ 0) (s : ℂ) :
+    HasDerivAt (fun s => integrand s u) (-(Complex.log u * integrand s u)) s := by
+  unfold integrand
+  exact (((hasDerivAt_neg s).const_cpow (c := u) (Or.inl hu)).mul_const (kernel u)).congr_deriv
+    (by ring)
+
+theorem norm_log_mul_integrand_line_le {s : ℂ} {σ₀ θ₀ : ℝ} (hσ₀ : |s.re| ≤ σ₀)
+    (hθ₀ : |s.im| ≤ θ₀) {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c ≠ n) (x : ℝ) :
+    ‖Complex.log (c - ω * x) * integrand s (c - ω * x)‖ ≤
+      (c + Real.sqrt 2 / c + π + 2 + 4 / π) * boundConst σ₀ θ₀ c c |c - round c| *
+        Real.exp (-(π / 4) * x ^ 2) := by
+  rw [norm_mul]
+  have h1 := norm_log_le_of_strip hc0 (u := c - ω * x)
+    (by rw [re_sub_im_line]; exact ⟨le_rfl, le_rfl⟩)
+  have h2 := norm_integrand_line_le hσ₀ hθ₀ hc0 hc x
+  have h3 := abs_im_line_le c x
+  have hK := boundConst_nonneg (σ₀ := σ₀) (θ₀ := θ₀) (c := c) (c' := c) (dist_round_pos hc)
+  set A : ℝ := c + Real.sqrt 2 / c + π with hA
+  set K := boundConst σ₀ θ₀ c c |c - round c| with hK'
+  have hA0 : 0 ≤ A := by positivity
+  have hπ : 0 < π / 2 := by positivity
+  calc ‖Complex.log (c - ω * x)‖ * ‖integrand s (c - ω * x)‖
+      ≤ (A + 2 * |x|) * (K * Real.exp (-(π / 2) * x ^ 2)) :=
+        mul_le_mul (h1.trans (show A + 2 * |((c : ℂ) - ω * x).im| ≤ A + 2 * |x| by linarith)) h2
+          (norm_nonneg _) (by positivity : (0 : ℝ) ≤ A + 2 * |x|)
+    _ = K * ((A + 2 * |x|) * Real.exp (-(π / 2) * x ^ 2)) := by ring
+    _ ≤ K * ((A + 2 + 2 / (π / 2)) * Real.exp (-(π / 2 / 2) * x ^ 2)) := by
+        exact mul_le_mul_of_nonneg_left (affine_mul_exp_neg_sq_le (B := 2) hπ hA0 (by norm_num) x)
+          hK
+    _ = (A + 2 + 4 / π) * K * Real.exp (-(π / 4) * x ^ 2) := by
+        rw [show π / 2 / 2 = π / 4 by ring, show 2 / (π / 2) = 4 / π by rw [div_div_eq_mul_div]; norm_num]
+        ring
+
+theorem abs_re_le_of_mem_ball {s s₀ : ℂ} (hs : s ∈ Metric.ball s₀ 1) :
+    |s.re| ≤ |s₀.re| + 1 ∧ |s.im| ≤ |s₀.im| + 1 := by
+  rw [Metric.mem_ball, dist_eq_norm] at hs
+  have h1 := Complex.abs_re_le_norm (s - s₀)
+  have h2 := Complex.abs_im_le_norm (s - s₀)
+  rw [sub_re] at h1
+  rw [sub_im] at h2
+  constructor
+  · calc |s.re| = |(s.re - s₀.re) + s₀.re| := by ring_nf
+      _ ≤ |s.re - s₀.re| + |s₀.re| := abs_add_le _ _
+      _ ≤ |s₀.re| + 1 := by linarith
+  · calc |s.im| = |(s.im - s₀.im) + s₀.im| := by ring_nf
+      _ ≤ |s.im - s₀.im| + |s₀.im| := abs_add_le _ _
+      _ ≤ |s₀.im| + 1 := by linarith
+
+/-- The Riemann–Siegel integral is differentiable in `s`, with derivative obtained by
+differentiating under the integral sign. -/
+theorem hasDerivAt_rsIntegral (s₀ : ℂ) {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c ≠ n) :
+    HasDerivAt (fun s => rsIntegral s c)
+      (∫ x : ℝ, -ω * -(Complex.log (c - ω * x) * integrand s₀ (c - ω * x))) s₀ := by
+  unfold rsIntegral
+  set σ₀ : ℝ := |s₀.re| + 1 with hσ₀
+  set θ₀ : ℝ := |s₀.im| + 1 with hθ₀
+  set K : ℝ := (c + Real.sqrt 2 / c + π + 2 + 4 / π) * boundConst σ₀ θ₀ c c |c - round c|
+    with hK
+  have hmeas : ∀ s : ℂ,
+      AEStronglyMeasurable (fun x : ℝ => -ω * integrand s (c - ω * x)) volume :=
+    fun s => (continuous_const.mul (continuous_integrand_line s hc0 hc)).aestronglyMeasurable
+  refine (hasDerivAt_integral_of_dominated_loc_of_deriv_le (Metric.ball_mem_nhds s₀ one_pos)
+    (Eventually.of_forall hmeas) ((integrable_integrand_line s₀ hc0 hc).const_mul _)
+    (F' := fun s x => -ω * -(Complex.log (c - ω * x) * integrand s (c - ω * x)))
+    ?_ (bound := fun x => K * Real.exp (-(π / 4) * x ^ 2)) ?_ ?_ ?_).2
+  · exact (continuous_const.mul ((continuous_log_line hc0).mul
+      (continuous_integrand_line s₀ hc0 hc)).neg).aestronglyMeasurable
+  · refine Eventually.of_forall fun x s hs => ?_
+    rw [norm_mul, norm_neg, norm_rsOmega, one_mul, norm_neg]
+    obtain ⟨h1, h2⟩ := abs_re_le_of_mem_ball hs
+    exact norm_log_mul_integrand_line_le h1 h2 hc0 hc x
+  · exact (integrable_exp_neg_mul_sq (by positivity)).const_mul K
+  · refine Eventually.of_forall fun x s _ => ?_
+    exact (hasDerivAt_integrand (line_ne_zero hc0 x) s).const_mul (-ω)
+
+/-- The Riemann–Siegel integral is an entire function of `s`. -/
+theorem differentiable_rsIntegral {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c ≠ n) :
+    Differentiable ℂ fun s => rsIntegral s c :=
+  fun s => (hasDerivAt_rsIntegral s hc0 hc).differentiableAt
+
 end RiemannSiegel

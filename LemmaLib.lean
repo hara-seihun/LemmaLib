@@ -20,4 +20,6 @@ public import LemmaLib.LinearAlgebra.Matrix.SkewSymmetric
 public import LemmaLib.LinearAlgebra.Vandermonde.Exponential
 public import LemmaLib.Logic.Function.Idempotent
 public import LemmaLib.MeasureTheory.Integral.Determinant
+public import LemmaLib.NumberTheory.DeBruijnNewman.Basic
+public import LemmaLib.NumberTheory.DeBruijnNewman.EffectiveModel
 public import LemmaLib.Topology.MetricSpace.Sequences

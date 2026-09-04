@@ -21,7 +21,7 @@ Individual modules can be imported separately.
 
 ## Scope
 
-The initial library covers finite differences, additive idempotents, polynomial reflection, weighted Cesàro estimates, calculus of even functions and isolated zeros, two-closures of permutation groups, semidirect products, small matrix identities, exponential Vandermonde systems, coordinatewise determinant integration, and separated subsequences in pseudometric spaces.
+The initial library covers finite differences, additive idempotents, polynomial reflection, weighted Cesàro estimates, calculus of even functions and isolated zeros, two-closures of permutation groups, semidirect products, small matrix identities, exponential Vandermonde systems, coordinatewise determinant integration, separated subsequences in pseudometric spaces, and the de Bruijn–Newman heat flow `H t` with the explicit bounds of Polymath15's effective Riemann–Siegel model (`LemmaLib.NumberTheory.DeBruijnNewman`).
 
 ## Contributing
 

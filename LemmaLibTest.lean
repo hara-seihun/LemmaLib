@@ -21,4 +21,6 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check Matrix.det_vandermonde_exp_neg_ne_zero
 #check Function.range_eq_fixedPoints_of_idempotent
 #check MeasureTheory.integral_det_columnwise
+#check DeBruijnNewman.H
+#check DeBruijnNewman.H_ne_zero_of_lt_norm_f'
 #check exists_strictMono_dist_ge

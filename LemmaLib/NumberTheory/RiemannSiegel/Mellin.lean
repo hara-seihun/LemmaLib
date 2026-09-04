@@ -156,6 +156,26 @@ theorem integrable_uncurry_mellin {s : ℂ} (hs : 0 < s.re) {c : ℝ} (hc0 : 0 <
     rw [e]
     exact le_of_eq (by ring)
 
+/-- The inner integral of Siegel's exchange is `r^{s-1} mordell 1 (z_r) c`. -/
+theorem integral_mellin_inner (s : ℂ) (c r : ℝ) :
+    ∫ x : ℝ, (r : ℂ) ^ (s - 1) *
+        (-ω * (cexp (-(ω * ((c : ℂ) - ω * x) * r)) * kernel (c - ω * x))) =
+      (r : ℂ) ^ (s - 1) * mordell 1 (mordellParam r) c := by
+  rw [integral_const_mul]
+  congr 1
+  unfold mordell
+  congr 1
+  ext x
+  rw [exp_mul_kernel_eq_mordellIntegrand]
+
+/-- The outer integrand of Siegel's exchange is integrable on `(0, ∞)`. -/
+theorem integrableOn_cpow_mul_mordell {s : ℂ} (hs : 0 < s.re) {c : ℝ} (hc0 : 0 < c)
+    (hc : ∀ n : ℤ, c ≠ n) :
+    IntegrableOn (fun r : ℝ => (r : ℂ) ^ (s - 1) * mordell 1 (mordellParam r) c) (Ioi 0) := by
+  have := (integrable_uncurry_mellin hs hc0 hc).integral_prod_right
+  refine this.congr (Eventually.of_forall fun r => ?_)
+  exact integral_mellin_inner s c r
+
 /-- Siegel's exchange: `R(s, c) = (ω^s / Γ(s)) ∫₀^∞ r^{s-1} mordell 1 (z_r) c dr`. -/
 theorem rsIntegral_eq_integral_mordell {s : ℂ} (hs : 0 < s.re) {c : ℝ} (hc0 : 0 < c)
     (hc : ∀ n : ℤ, c ≠ n) :
@@ -177,12 +197,7 @@ theorem rsIntegral_eq_integral_mordell {s : ℂ} (hs : 0 < s.re) {c : ℝ} (hc0 
   rw [integral_const_mul, integral_integral_swap (integrable_uncurry_mellin hs hc0 hc)]
   congr 1
   refine setIntegral_congr_fun measurableSet_Ioi fun r _ => ?_
-  rw [integral_const_mul]
-  congr 1
-  unfold mordell
-  congr 1
-  ext x
-  rw [exp_mul_kernel_eq_mordellIntegrand]
+  exact integral_mellin_inner s c r
 
 /-! ### The closed form of the Mordell integral at the parameter `z_r` -/
 
@@ -331,5 +346,146 @@ theorem integral_cpow_mul_geomTerm {s : ℂ} (hs : 1 < s.re) :
       (summable_integral_norm_cpow_mul_geomSummand hs)]
   simp_rw [integral_cpow_mul_geomSummand hs0]
   rw [tsum_mul_left, zeta_eq_tsum_one_div_nat_add_one_cpow hs]
+
+/-! ### Integrability of the Gaussian part -/
+
+theorem norm_exp_sub_exp_neg_rsOmega_half_ge {r : ℝ} (hr : 0 < r) :
+    Real.sqrt 2 / 2 * r ≤ ‖cexp (ω * r / 2) - cexp (-(ω * r / 2))‖ := by
+  have h1 : ‖cexp (ω * r / 2)‖ = Real.exp (Real.sqrt 2 / 2 * r / 2) := by
+    rw [Complex.norm_exp, show ω * r / 2 = ω * ((r / 2 : ℝ) : ℂ) by push_cast; ring,
+      re_rsOmega_mul_ofReal]
+    ring_nf
+  have h2 : ‖cexp (-(ω * r / 2))‖ = Real.exp (-(Real.sqrt 2 / 2 * r / 2)) := by
+    rw [Complex.norm_exp, neg_re, show ω * r / 2 = ω * ((r / 2 : ℝ) : ℂ) by push_cast; ring,
+      re_rsOmega_mul_ofReal]
+    ring_nf
+  refine le_trans ?_ (norm_sub_norm_le _ _)
+  rw [h1, h2]
+  have := abs_le_abs_sinh (Real.sqrt 2 / 2 * r / 2)
+  have hpos : 0 < Real.sqrt 2 / 2 * r / 2 := by positivity
+  rw [abs_of_pos hpos, abs_of_pos (Real.sinh_pos_iff.2 hpos), Real.sinh_eq] at this
+  linarith
+
+theorem norm_gaussTerm_le {r : ℝ} (hr : 0 < r) :
+    ‖gaussTerm r‖ ≤ Real.sqrt 2 * r⁻¹ * Real.exp (-(1 / (4 * π)) * r ^ 2) := by
+  unfold gaussTerm
+  rw [norm_div]
+  have hd := norm_exp_sub_exp_neg_rsOmega_half_ge hr
+  have hd0 : 0 < Real.sqrt 2 / 2 * r := by positivity
+  have hn : ‖cexp (-((r : ℂ) ^ 2 / (4 * π)))‖ = Real.exp (-(1 / (4 * π)) * r ^ 2) := by
+    rw [Complex.norm_exp]
+    congr 1
+    rw [show -((r : ℂ) ^ 2 / (4 * π)) = ((-(1 / (4 * π)) * r ^ 2 : ℝ) : ℂ) by push_cast; ring,
+      Complex.ofReal_re]
+  rw [hn, div_le_iff₀ (lt_of_lt_of_le hd0 hd)]
+  calc Real.exp (-(1 / (4 * π)) * r ^ 2)
+      = Real.sqrt 2 * r⁻¹ * Real.exp (-(1 / (4 * π)) * r ^ 2) * (Real.sqrt 2 / 2 * r) := by
+        have h2 : Real.sqrt 2 * Real.sqrt 2 = 2 := Real.mul_self_sqrt (by norm_num)
+        field_simp
+        linear_combination (-1 : ℝ) * h2
+    _ ≤ _ := by gcongr
+
+theorem integrableOn_cpow_mul_gaussTerm {s : ℂ} (hs : 1 < s.re) :
+    IntegrableOn (fun r : ℝ => (r : ℂ) ^ (s - 1) * gaussTerm r) (Ioi 0) := by
+  have hb : 0 < 1 / (4 * π) := by positivity
+  have hint : IntegrableOn (fun r : ℝ => Real.sqrt 2 *
+      (r ^ (s.re - 2) * Real.exp (-(1 / (4 * π)) * r ^ (2 : ℝ)))) (Ioi 0) :=
+    (integrableOn_rpow_mul_exp_neg_mul_rpow (by linarith) two_pos hb).const_mul _
+  refine hint.mono' ?_ ?_
+  · refine ContinuousOn.aestronglyMeasurable ?_ measurableSet_Ioi
+    refine continuousOn_of_forall_continuousAt fun r hr => ?_
+    rw [mem_Ioi] at hr
+    refine (continuousAt_ofReal_cpow_const _ _ (Or.inr hr.ne')).mul ?_
+    unfold gaussTerm
+    refine ContinuousAt.div (by fun_prop) (by fun_prop) ?_
+    exact norm_ne_zero_iff.1
+      (ne_of_gt (lt_of_lt_of_le (by positivity) (norm_exp_sub_exp_neg_rsOmega_half_ge hr)))
+  · filter_upwards [ae_restrict_mem measurableSet_Ioi] with r hr
+    rw [mem_Ioi] at hr
+    rw [norm_mul, norm_cpow_eq_rpow_re_of_pos hr, sub_re, one_re, Real.rpow_two]
+    calc r ^ (s.re - 1) * ‖gaussTerm r‖
+        ≤ r ^ (s.re - 1) * (Real.sqrt 2 * r⁻¹ * Real.exp (-(1 / (4 * π)) * r ^ 2)) :=
+          mul_le_mul_of_nonneg_left (norm_gaussTerm_le hr) (by positivity)
+      _ = Real.sqrt 2 * (r ^ (s.re - 2) * Real.exp (-(1 / (4 * π)) * r ^ 2)) := by
+          rw [Real.rpow_sub hr, Real.rpow_sub hr, Real.rpow_one, Real.rpow_two]
+          field_simp
+
+theorem integrableOn_cpow_mul_geomTerm {s : ℂ} (hs : 1 < s.re) {c : ℝ} (hc0 : 0 < c)
+    (hc1 : c < 1) :
+    IntegrableOn (fun r : ℝ => (r : ℂ) ^ (s - 1) * geomTerm r) (Ioi 0) := by
+  have h := (integrableOn_cpow_mul_mordell (by linarith) hc0 (ne_int_of_mem_Ioo hc0 hc1)).add
+    (integrableOn_cpow_mul_gaussTerm hs)
+  refine h.congr_fun (fun r hr => ?_) measurableSet_Ioi
+  simp only [Pi.add_apply]
+  rw [mordell_mordellParam hr hc0 hc1]
+  ring
+
+/-! ### The substitution `r = 2πy` -/
+
+/-- The Gaussian integral `I₀(s) = ∫₀^∞ y^{s-1} e^{-πy²} / (e^{πωy} - e^{-πωy}) dy`. -/
+@[expose] noncomputable def gaussIntegral (s : ℂ) : ℂ :=
+  ∫ y : ℝ in Ioi 0, (y : ℂ) ^ (s - 1) *
+    (cexp (-(π * y ^ 2)) / (cexp (π * ω * y) - cexp (-(π * ω * y))))
+
+theorem gaussTerm_two_pi_mul (y : ℝ) :
+    gaussTerm (2 * π * y) = cexp (-(π * y ^ 2)) / (cexp (π * ω * y) - cexp (-(π * ω * y))) := by
+  unfold gaussTerm
+  have : (π : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
+  push_cast
+  congr 2
+  · field_simp
+    ring
+  · congr 1; ring
+  · congr 2; ring
+
+theorem integral_cpow_mul_gaussTerm (s : ℂ) :
+    ∫ r : ℝ in Ioi 0, (r : ℂ) ^ (s - 1) * gaussTerm r = (2 * π) ^ s * gaussIntegral s := by
+  have h2π : (0 : ℝ) < 2 * π := by positivity
+  have := integral_comp_mul_left_Ioi (fun r : ℝ => (r : ℂ) ^ (s - 1) * gaussTerm r) 0 h2π
+  rw [mul_zero] at this
+  have hI : ∫ r : ℝ in Ioi 0, (r : ℂ) ^ (s - 1) * gaussTerm r =
+      (2 * π : ℂ) * ∫ x : ℝ in Ioi 0, ((2 * π * x : ℝ) : ℂ) ^ (s - 1) * gaussTerm (2 * π * x) := by
+    rw [this, Complex.real_smul, ← mul_assoc]
+    push_cast
+    rw [mul_inv_cancel₀ (by exact_mod_cast h2π.ne'), one_mul]
+  rw [hI]
+  have e : ∀ x ∈ Ioi (0 : ℝ), ((2 * π * x : ℝ) : ℂ) ^ (s - 1) * gaussTerm (2 * π * x) =
+      (2 * π : ℂ) ^ (s - 1) * ((x : ℂ) ^ (s - 1) *
+        (cexp (-(π * x ^ 2)) / (cexp (π * ω * x) - cexp (-(π * ω * x))))) := by
+    intro x hx
+    rw [gaussTerm_two_pi_mul,
+      show ((2 * π * x : ℝ) : ℂ) = ((2 * π : ℝ) : ℂ) * (x : ℂ) by push_cast; ring,
+      Complex.mul_cpow_ofReal_nonneg h2π.le (le_of_lt hx)]
+    push_cast
+    ring
+  rw [setIntegral_congr_fun measurableSet_Ioi e, integral_const_mul]
+  unfold gaussIntegral
+  rw [← mul_assoc]
+  congr 1
+  rw [Complex.cpow_sub _ _ (by exact_mod_cast h2π.ne'), Complex.cpow_one]
+  field_simp
+
+/-! ### The Mellin form of the Riemann–Siegel integral -/
+
+/-- For `Re s > 1` and `0 < c < 1`,
+`R(s, c) = ζ(s) - ω^s (2π)^s / Γ(s) * I₀(s)` with `I₀` the Gaussian integral `gaussIntegral`. -/
+theorem rsIntegral_eq_zeta_sub {s : ℂ} (hs : 1 < s.re) {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1) :
+    rsIntegral s c = riemannZeta s -
+      ω ^ s * (2 * π) ^ s / Complex.Gamma s * gaussIntegral s := by
+  have hs0 : 0 < s.re := by linarith
+  rw [rsIntegral_eq_integral_mordell hs0 hc0 (ne_int_of_mem_Ioo hc0 hc1)]
+  have e : ∀ r ∈ Ioi (0 : ℝ), (r : ℂ) ^ (s - 1) * mordell 1 (mordellParam r) c =
+      (r : ℂ) ^ (s - 1) * geomTerm r - (r : ℂ) ^ (s - 1) * gaussTerm r := by
+    intro r hr
+    rw [mordell_mordellParam hr hc0 hc1, mul_sub]
+  rw [setIntegral_congr_fun measurableSet_Ioi e,
+    integral_sub (integrableOn_cpow_mul_geomTerm hs hc0 hc1) (integrableOn_cpow_mul_gaussTerm hs),
+    integral_cpow_mul_geomTerm hs, integral_cpow_mul_gaussTerm]
+  have hΓ : Complex.Gamma s ≠ 0 := Complex.Gamma_ne_zero_of_re_pos hs0
+  have hω : ω ^ s ≠ 0 := by
+    rw [Ne, Complex.cpow_eq_zero_iff]
+    exact fun h => rsOmega_ne_zero h.1
+  rw [Complex.cpow_neg]
+  field_simp
 
 end RiemannSiegel

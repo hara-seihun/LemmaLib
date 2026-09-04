@@ -40,4 +40,9 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check RiemannSiegel.differentiable_rsIntegral
 #check Complex.integral_cpow_mul_exp_neg_mul_Ioi_of_re_pos
 #check RiemannSiegel.rsIntegral_eq_zeta_sub
+#check DeBruijnNewman.norm_tail_le
+#check DeBruijnNewman.tailEstimateWith
+#check DeBruijnNewman.effectiveApproximationWith
+#check DeBruijnNewman.H_ne_zero_of_lt_norm_f''
 #print axioms RiemannSiegel.formula_expand
+#print axioms DeBruijnNewman.effectiveApproximationWith

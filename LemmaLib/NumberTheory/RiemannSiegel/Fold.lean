@@ -443,4 +443,92 @@ theorem integral_foldIntegrand_line_eq_integral {s : ℂ} (hs : 2 < s.re) {c : �
     rw [uIcc_of_le hβ] at hv
     exact differentiableAt_foldIntegrand_conj_rsOmega_mul hc1 hv hvS
 
+/-! ### The two rays -/
+
+theorem conj_rsOmega_eq_exp : (starRingEnd ℂ) ω = cexp (-(π * I / 4)) := by
+  unfold Complex.rsOmega
+  rw [← Complex.exp_conj]
+  congr 1
+  simp [map_div₀, Complex.conj_ofReal, Complex.conj_I, map_ofNat]
+  ring
+
+theorem neg_conj_rsOmega_eq_exp : -(starRingEnd ℂ) ω = cexp (3 * π * I / 4) := by
+  rw [conj_rsOmega_eq_exp, show 3 * (π : ℂ) * I / 4 = π * I + -(π * I / 4) by ring,
+    Complex.exp_add, Complex.exp_pi_mul_I]
+  ring
+
+theorem exp_cpow_of_im {z : ℂ} (h1 : -π < z.im) (h2 : z.im ≤ π) (w : ℂ) :
+    cexp z ^ w = cexp (z * w) := by
+  rw [Complex.cpow_def_of_ne_zero (Complex.exp_ne_zero z), Complex.log_exp h1 h2]
+
+theorem conj_rsOmega_cpow (w : ℂ) : (starRingEnd ℂ) ω ^ w = cexp (-(π * I / 4) * w) := by
+  rw [conj_rsOmega_eq_exp, exp_cpow_of_im]
+  · simp; linarith [Real.pi_pos]
+  · simp; linarith [Real.pi_pos]
+
+theorem neg_conj_rsOmega_cpow (w : ℂ) : (-(starRingEnd ℂ) ω) ^ w = cexp (3 * π * I / 4 * w) := by
+  rw [neg_conj_rsOmega_eq_exp, exp_cpow_of_im]
+  · simp; linarith [Real.pi_pos]
+  · simp; linarith [Real.pi_pos]
+
+theorem arg_neg_conj_rsOmega : arg (-(starRingEnd ℂ) ω) = 3 * π / 4 := by
+  rw [neg_conj_rsOmega_eq_exp, Complex.arg_exp]
+  have e : (3 * (π : ℂ) * I / 4).im = 3 * π / 4 := by simp
+  rw [e, toIocMod_eq_self]
+  constructor <;> linarith [Real.pi_pos]
+
+theorem conj_rsOmega_sq : (starRingEnd ℂ) ω ^ 2 = -I := by
+  rw [← map_pow, rsOmega_sq, Complex.conj_I]
+
+theorem I_mul_conj_rsOmega : I * (starRingEnd ℂ) ω = ω := by
+  rw [← rsOmega_sq, sq, mul_assoc, mul_comm ω ((starRingEnd ℂ) ω), conj_rsOmega_mul, mul_one]
+
+theorem neg_conj_rsOmega_ne_zero : -(starRingEnd ℂ) ω ≠ 0 := by
+  rw [neg_ne_zero, map_ne_zero]; exact rsOmega_ne_zero
+
+theorem conj_rsOmega_ne_zero : (starRingEnd ℂ) ω ≠ 0 := by
+  rw [map_ne_zero]; exact rsOmega_ne_zero
+
+/-- On the ray `ω̄ x`, `x > 0`, the reflected integrand is `ω̄^{s-1}` times the Gaussian
+integrand. -/
+theorem foldIntegrand_conj_rsOmega_mul_ofReal (s : ℂ) {x : ℝ} (hx : 0 < x) :
+    foldIntegrand s ((starRingEnd ℂ) ω * x) =
+      (starRingEnd ℂ) ω ^ (s - 1) *
+        ((x : ℂ) ^ (s - 1) * (cexp (-(π * x ^ 2)) / (cexp (π * ω * x) - cexp (-(π * ω * x))))) := by
+  unfold foldIntegrand
+  have hx0 : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
+  rw [mul_cpow_of_arg_add_mem conj_rsOmega_ne_zero hx0 (by
+    rw [arg_conj_rsOmega, Complex.arg_ofReal_of_nonneg hx.le]
+    constructor <;> linarith [Real.pi_pos]), mul_assoc]
+  have e1 : cexp (-(π * I * ((starRingEnd ℂ) ω * x) ^ 2)) = cexp (-(π * x ^ 2)) := by
+    congr 1
+    rw [mul_pow, conj_rsOmega_sq]
+    linear_combination (π * (x : ℂ) ^ 2) * I_sq
+  have e2 : (π : ℂ) * I * ((starRingEnd ℂ) ω * x) = π * ω * x := by
+    rw [show (π : ℂ) * I * ((starRingEnd ℂ) ω * x) = π * (I * (starRingEnd ℂ) ω) * x by ring,
+      I_mul_conj_rsOmega]
+  rw [e1, e2]
+
+/-- On the ray `-ω̄ x`, `x > 0`, the reflected integrand is `-(-ω̄)^{s-1}` times the Gaussian
+integrand. -/
+theorem foldIntegrand_conj_rsOmega_mul_neg_ofReal (s : ℂ) {x : ℝ} (hx : 0 < x) :
+    foldIntegrand s ((starRingEnd ℂ) ω * (-x : ℝ)) =
+      -((-(starRingEnd ℂ) ω) ^ (s - 1) *
+        ((x : ℂ) ^ (s - 1) * (cexp (-(π * x ^ 2)) / (cexp (π * ω * x) - cexp (-(π * ω * x)))))) := by
+  unfold foldIntegrand
+  have hx0 : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
+  rw [ofReal_neg, show (starRingEnd ℂ) ω * -(x : ℂ) = -(starRingEnd ℂ) ω * x by ring,
+    mul_cpow_of_arg_add_mem neg_conj_rsOmega_ne_zero hx0 (by
+    rw [arg_neg_conj_rsOmega, Complex.arg_ofReal_of_nonneg hx.le]
+    constructor <;> linarith [Real.pi_pos]), mul_assoc]
+  have e1 : cexp (-(π * I * (-(starRingEnd ℂ) ω * x) ^ 2)) = cexp (-(π * x ^ 2)) := by
+    congr 1
+    rw [neg_mul, neg_sq, mul_pow, conj_rsOmega_sq]
+    linear_combination (π * (x : ℂ) ^ 2) * I_sq
+  have e2 : (π : ℂ) * I * (-(starRingEnd ℂ) ω * x) = -(π * ω * x) := by
+    rw [show (π : ℂ) * I * (-(starRingEnd ℂ) ω * x) = -(π * (I * (starRingEnd ℂ) ω) * x) by ring,
+      I_mul_conj_rsOmega]
+  rw [e1, e2, neg_neg, ← neg_sub (cexp (π * ω * x)), div_neg]
+  ring
+
 end RiemannSiegel

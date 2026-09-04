@@ -36,3 +36,5 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check Complex.Stirling.exists_Gamma_eq_sqrt_two_pi_mul_exp
 #check Complex.mordell_one
 #check Complex.integral_rsLine_sub_eq_of_pole
+#check RiemannSiegel.rsIntegral_add_half
+#check RiemannSiegel.differentiable_rsIntegral

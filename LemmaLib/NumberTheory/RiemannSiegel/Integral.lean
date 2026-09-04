@@ -21,8 +21,8 @@ non-integer real point `c`, and establishes its basic properties:
   K exp (-π (Im u)²)` on the closed strip `c ≤ Re u - Im u ≤ c'`, uniform in `s` on bounded sets;
 * `RiemannSiegel.integrable_integrand_line`: integrability along the lines;
 * `RiemannSiegel.differentiable_rsIntegral`: `s ↦ R(s, c)` is entire;
-* `RiemannSiegel.rsIntegral_add_one`: moving the line from `c ∈ (n - 1, n)` to `c' ∈ (n, n + 1)`
-  across the pole at `u = n` subtracts `n^{-s}`, so that
+* `RiemannSiegel.rsIntegral_eq_sub_of_lt`: moving the line from `c ∈ (n - 1, n)` to
+  `c' ∈ (n, n + 1)` across the pole at `u = n` subtracts `n^{-s}`, so that
   `R(s, N + 1/2) = R(s, 1/2) - ∑_{n=1}^N n^{-s}` (`rsIntegral_add_half`).
 
 The value `R(s, 1/2)` is the function `R_{0,0}(s)` of the Riemann–Siegel formula
@@ -414,5 +414,208 @@ theorem hasDerivAt_rsIntegral (s₀ : ℂ) {c : ℝ} (hc0 : 0 < c) (hc : ∀ n :
 theorem differentiable_rsIntegral {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c ≠ n) :
     Differentiable ℂ fun s => rsIntegral s c :=
   fun s => (hasDerivAt_rsIntegral s hc0 hc).differentiableAt
+
+/-! ### Crossing a pole -/
+
+/-- The numerator `u^{-s} e^{iπu²} (-1)^n mordellS (u - n)`: holomorphic near `u = n`, with
+`integrand s u = poleNumerator s n u / (u - n)` away from the integers. -/
+@[expose] noncomputable def poleNumerator (s : ℂ) (n : ℕ) (u : ℂ) : ℂ :=
+  u ^ (-s) * cexp (π * I * u ^ 2) * ((-1) ^ n * mordellS (u - n))
+
+theorem sin_pi_mul_sub_nat (u : ℂ) (n : ℕ) :
+    Complex.sin (π * (u - n)) = (-1) ^ n * Complex.sin (π * u) := by
+  rw [mul_sub, mul_comm (π : ℂ) (n : ℂ)]
+  exact Complex.sin_antiperiodic.sub_nat_mul_eq n
+
+theorem integrand_eq_poleNumerator_div {s u : ℂ} (n : ℕ) (hu : Complex.sin (π * u) ≠ 0)
+    (hun : u ≠ n) : integrand s u = poleNumerator s n u / (u - n) := by
+  unfold integrand kernel poleNumerator
+  rw [exp_sub_exp_neg_eq_two_I_sin, mordellS, sincPi_of_ne (sub_ne_zero.2 hun),
+    sin_pi_mul_sub_nat]
+  have h1 : ((-1 : ℂ) ^ n) ≠ 0 := pow_ne_zero _ (by norm_num)
+  have h2 : u - n ≠ 0 := sub_ne_zero.2 hun
+  have h3 : (I : ℂ) ≠ 0 := I_ne_zero
+  field_simp
+
+theorem poleNumerator_apply_self (s : ℂ) (n : ℕ) :
+    poleNumerator s n n = (n : ℂ) ^ (-s) / (2 * π * I) := by
+  unfold poleNumerator
+  rw [sub_self, mordellS_zero]
+  have h1 : cexp (π * I * (n : ℂ) ^ 2) = (-1) ^ (n ^ 2) := by
+    rw [show (π : ℂ) * I * (n : ℂ) ^ 2 = ((n ^ 2 : ℕ) : ℂ) * (π * I) by push_cast; ring,
+      Complex.exp_nat_mul, Complex.exp_pi_mul_I]
+  have h2 : (-1 : ℂ) ^ (n ^ 2) * (-1) ^ n = 1 := by
+    rw [← pow_add]
+    refine Even.neg_one_pow ?_
+    rw [sq, ← mul_add_one]
+    exact Nat.even_mul_succ_self n
+  rw [h1]
+  calc (n : ℂ) ^ (-s) * (-1) ^ (n ^ 2) * ((-1) ^ n * (1 / (2 * π * I)))
+      = (n : ℂ) ^ (-s) * ((-1) ^ (n ^ 2) * (-1) ^ n) * (1 / (2 * π * I)) := by ring
+    _ = (n : ℂ) ^ (-s) / (2 * π * I) := by rw [h2]; ring
+
+theorem differentiableAt_poleNumerator {s u : ℂ} {n : ℕ} (hu : 0 < u.re - u.im)
+    (hun : ∀ m : ℤ, m ≠ 0 → u ≠ n + m) :
+    DifferentiableAt ℂ (poleNumerator s n) u := by
+  unfold poleNumerator
+  have h1 : DifferentiableAt ℂ (fun u : ℂ => u ^ (-s)) u :=
+    differentiableAt_id.cpow_const (mem_slitPlane_of_re_sub_im_pos hu)
+  have h2 : DifferentiableAt ℂ (fun u : ℂ => mordellS (u - n)) u := by
+    refine (differentiableAt_mordellS ?_).comp u (differentiableAt_id.sub_const _)
+    refine sincPi_ne_zero_of_ne_int fun m hm h => hun m hm ?_
+    linear_combination h
+  exact (h1.mul (by fun_prop)).mul ((differentiableAt_const _).mul h2)
+
+/-- On the strip `c ≤ κ ≤ c'`, the integers other than `n` are at distance at least
+`min (c - (n - 1)) (n + 1 - c')` from `κ`. -/
+theorem min_le_abs_sub_nat_add_int {c c' : ℝ} (n : ℕ) {κ : ℝ} (hκ : κ ∈ Icc c c') (m : ℤ)
+    (hm : m ≠ 0) :
+    min (c - (n - 1)) (n + 1 - c') ≤ |κ - (n + m)| := by
+  rcases lt_or_gt_of_ne hm with h | h
+  · have : (m : ℝ) ≤ -1 := by exact_mod_cast Int.le_sub_one_iff.mpr h
+    refine (min_le_left _ _).trans (le_trans ?_ (le_abs_self _))
+    linarith [hκ.1]
+  · have : (1 : ℝ) ≤ m := by exact_mod_cast h
+    refine (min_le_right _ _).trans (le_trans ?_ (neg_le_abs _))
+    linarith [hκ.2]
+
+theorem eq_nat_of_mem_strip {c c' : ℝ} {n : ℕ} (hcn : (n : ℝ) - 1 < c) (hc'n : c' < n + 1)
+    {u : ℂ} (hu : u.re - u.im ∈ Icc c c') (m : ℤ) (hm : m ≠ 0) : u ≠ n + m := by
+  intro h
+  rw [h] at hu
+  simp only [add_re, add_im, natCast_re, natCast_im, intCast_re, intCast_im, add_zero] at hu
+  have h1 : (-1 : ℝ) < m := by linarith [hu.1, hcn]
+  have h2 : (m : ℝ) < 1 := by linarith [hu.2, hc'n]
+  have h1' : (-1 : ℤ) < m := by exact_mod_cast h1
+  have h2' : m < (1 : ℤ) := by exact_mod_cast h2
+  omega
+
+/-- The pole numerator satisfies a Gaussian bound on the strip `c ≤ Re u - Im u ≤ c'` when
+`n` is the only integer in `[c, c']`. -/
+theorem exists_norm_poleNumerator_le (s : ℂ) {c c' : ℝ} {n : ℕ} (hc : 0 < c)
+    (hcn : (n : ℝ) - 1 < c) (hc'n : c' < n + 1) :
+    ∃ C : ℝ, ∀ u : ℂ, u.re - u.im ∈ Icc c c' →
+      ‖poleNumerator s n u‖ ≤ C * Real.exp (-(π / 2) * u.im ^ 2) := by
+  set δ : ℝ := min (c - (n - 1)) (n + 1 - c') with hδ
+  by_cases hcc' : c ≤ c'
+  swap
+  · refine ⟨0, fun u hu => ?_⟩
+    exact absurd (hu.1.trans hu.2) hcc'
+  have hδ0 : 0 < δ := by
+    rw [hδ]; exact lt_min (by linarith) (by linarith)
+  set ρ : ℝ := δ / Real.sqrt 2 with hρ
+  have hs2 : 0 < Real.sqrt 2 := by positivity
+  have hρ0 : 0 < ρ := by positivity
+  set G := gaussConst |s.re| |s.im| c c' with hG
+  have hG0 : 0 < G := gaussConst_pos _ _ _ _
+  set A : ℝ := 1 / 4 + (c' + n) / (4 * ρ) with hA
+  set B : ℝ := 2 / (4 * ρ) with hB
+  have hc'0 : 0 < c' := hc.trans_le hcc'
+  have hA0 : 0 ≤ A := by
+    have : 0 ≤ (c' + n) / (4 * ρ) :=
+      div_nonneg (by linarith [(Nat.cast_nonneg n : (0 : ℝ) ≤ n)]) (by positivity)
+    rw [hA]; linarith
+  have hB0 : 0 ≤ B := by positivity
+  refine ⟨G * (A + B + B / π), fun u hu => ?_⟩
+  have hgauss := norm_cpow_mul_exp_le (s := s) le_rfl le_rfl hc hu
+  obtain ⟨-, hup⟩ := norm_bounds_of_strip hc hu
+  -- the `mordellS` factor
+  have hdist : ∀ m : ℤ, m ≠ 0 → ρ ≤ ‖u - n - m‖ := by
+    intro m hm
+    have h1 := min_le_abs_sub_nat_add_int n hu m hm
+    have h2 := abs_re_sub_im_le_sqrt_two_mul_norm (u - n - m)
+    simp only [sub_re, sub_im, natCast_re, natCast_im, intCast_re, intCast_im, sub_zero] at h2
+    rw [hρ, div_le_iff₀ hs2]
+    calc δ ≤ |u.re - u.im - (n + m)| := h1
+      _ = |u.re - n - m - u.im| := by ring_nf
+      _ ≤ Real.sqrt 2 * ‖u - n - m‖ := h2
+      _ = ‖u - n - m‖ * Real.sqrt 2 := mul_comm _ _
+  have hS := norm_mordellS_le hρ0 hdist
+  have hun : ‖u - n‖ ≤ c' + n + 2 * |u.im| := by
+    calc ‖u - n‖ ≤ ‖u‖ + ‖(n : ℂ)‖ := norm_sub_le _ _
+      _ = ‖u‖ + n := by rw [Complex.norm_natCast]
+      _ ≤ c' + n + 2 * |u.im| := by linarith
+  have hS' : ‖(-1 : ℂ) ^ n * mordellS (u - n)‖ ≤ A + B * |u.im| := by
+    rw [norm_mul, norm_pow, norm_neg, norm_one, one_pow, one_mul]
+    refine hS.trans ?_
+    rw [hA, hB]
+    have : ‖u - n‖ / (4 * ρ) ≤ (c' + n + 2 * |u.im|) / (4 * ρ) := by gcongr
+    have e : (c' + n + 2 * |u.im|) / (4 * ρ) = (c' + n) / (4 * ρ) + 2 / (4 * ρ) * |u.im| := by ring
+    linarith
+  unfold poleNumerator
+  rw [norm_mul]
+  calc ‖u ^ (-s) * cexp (π * I * u ^ 2)‖ * ‖(-1 : ℂ) ^ n * mordellS (u - n)‖
+      ≤ G * Real.exp (-π * u.im ^ 2) * (A + B * |u.im|) :=
+        mul_le_mul hgauss hS' (norm_nonneg _) (by positivity)
+    _ = G * ((A + B * |u.im|) * Real.exp (-π * u.im ^ 2)) := by ring
+    _ ≤ G * ((A + B + B / π) * Real.exp (-(π / 2) * u.im ^ 2)) := by
+        exact mul_le_mul_of_nonneg_left (affine_mul_exp_neg_sq_le Real.pi_pos hA0 hB0 u.im) hG0.le
+    _ = G * (A + B + B / π) * Real.exp (-(π / 2) * u.im ^ 2) := by ring
+
+theorem sin_line_ne_zero {c : ℝ} (hc : ∀ n : ℤ, c ≠ n) (x : ℝ) :
+    Complex.sin (π * ((c : ℂ) - ω * x)) ≠ 0 := by
+  have := mordell_denom_line_ne_zero hc x
+  rw [exp_sub_exp_neg_eq_two_I_sin] at this
+  exact right_ne_zero_of_mul this
+
+theorem line_ne_nat {c : ℝ} (hc : ∀ n : ℤ, c ≠ n) (x : ℝ) (n : ℕ) : (c : ℂ) - ω * x ≠ n := by
+  intro h
+  have := re_sub_im_line c x
+  rw [h] at this
+  simp only [natCast_re, natCast_im, sub_zero] at this
+  exact hc n (by rw [← this]; simp)
+
+/-- Moving the Riemann–Siegel line from `c` to `c'` across the single integer `n ∈ (c, c')`
+subtracts the residue term `n^{-s}`. -/
+theorem rsIntegral_eq_sub_of_lt (s : ℂ) {c c' : ℝ} {n : ℕ} (hc : 0 < c) (hcn : (n : ℝ) - 1 < c)
+    (hcn' : c < n) (hnc' : (n : ℝ) < c') (hc'n : c' < n + 1) :
+    rsIntegral s c' = rsIntegral s c - (n : ℂ) ^ (-s) := by
+  obtain ⟨C, hC⟩ := exists_norm_poleNumerator_le s hc hcn hc'n
+  have hc' : 0 < c' := by linarith [(Nat.cast_nonneg n : (0 : ℝ) ≤ n)]
+  have hcZ : ∀ m : ℤ, c ≠ m := by
+    intro m h
+    have h1 : (n : ℝ) - 1 < m := by rw [← h]; exact hcn
+    have h2 : (m : ℝ) < n := by rw [← h]; exact hcn'
+    have h1' : (n : ℤ) - 1 < m := by exact_mod_cast h1
+    have h2' : m < (n : ℤ) := by exact_mod_cast h2
+    omega
+  have hc'Z : ∀ m : ℤ, c' ≠ m := by
+    intro m h
+    have h1 : (n : ℝ) < m := by rw [← h]; exact hnc'
+    have h2 : (m : ℝ) < n + 1 := by rw [← h]; exact hc'n
+    have h1' : (n : ℤ) < m := by exact_mod_cast h1
+    have h2' : m < (n : ℤ) + 1 := by exact_mod_cast h2
+    omega
+  have key := integral_rsLine_sub_eq_of_pole (N := poleNumerator s n) (p := n) (a := π / 2)
+    (C := C) (by positivity) (by simpa using hcn') (by simpa using hnc')
+    (fun u hu => differentiableAt_poleNumerator (hc.trans_le hu.1) (eq_nat_of_mem_strip hcn hc'n hu))
+    hC
+  rw [poleNumerator_apply_self] at key
+  have e1 : ∀ x : ℝ, -ω * (poleNumerator s n (c' - ω * x) / (c' - ω * x - n)) =
+      -ω * integrand s (c' - ω * x) := fun x => by
+    rw [integrand_eq_poleNumerator_div n (sin_line_ne_zero hc'Z x) (line_ne_nat hc'Z x n)]
+  have e2 : ∀ x : ℝ, -ω * (poleNumerator s n (c - ω * x) / (c - ω * x - n)) =
+      -ω * integrand s (c - ω * x) := fun x => by
+    rw [integrand_eq_poleNumerator_div n (sin_line_ne_zero hcZ x) (line_ne_nat hcZ x n)]
+  simp_rw [e1, e2] at key
+  have h2πI : (2 * π * I : ℂ) ≠ 0 := by simp [Real.pi_ne_zero]
+  have e3 : -2 * π * I * ((n : ℂ) ^ (-s) / (2 * π * I)) = -(n : ℂ) ^ (-s) := by
+    field_simp
+  rw [e3] at key
+  unfold rsIntegral
+  linear_combination key
+
+/-- `R(s, N + 1/2) = R(s, 1/2) - ∑_{n=1}^{N} n^{-s}`. -/
+theorem rsIntegral_add_half (s : ℂ) (N : ℕ) :
+    rsIntegral s (N + 1 / 2) = rsIntegral s (1 / 2) - ∑ n ∈ Finset.range N, ((n : ℂ) + 1) ^ (-s) := by
+  induction N with
+  | zero => simp
+  | succ N ih =>
+    rw [Finset.sum_range_succ, ← sub_sub, ← ih]
+    have := rsIntegral_eq_sub_of_lt s (c := N + 1 / 2) (c' := N + 1 + 1 / 2) (n := N + 1)
+      (by positivity) (by push_cast; linarith) (by push_cast; linarith) (by push_cast; linarith)
+      (by push_cast; linarith)
+    push_cast at this ⊢
+    exact this
 
 end RiemannSiegel

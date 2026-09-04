@@ -34,6 +34,8 @@ public import LemmaLib.NumberTheory.DeBruijnNewman.Heat
 public import LemmaLib.NumberTheory.DeBruijnNewman.Kernel
 public import LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel
 public import LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate
+public import LemmaLib.NumberTheory.DeBruijnNewman.Tail
+public import LemmaLib.NumberTheory.DeBruijnNewman.TailEstimate
 public import LemmaLib.NumberTheory.DeBruijnNewman.Theta
 public import LemmaLib.NumberTheory.DeBruijnNewman.Xi
 public import LemmaLib.NumberTheory.RiemannSiegel.Fold

@@ -21,7 +21,7 @@ Individual modules can be imported separately.
 
 ## Scope
 
-The initial library covers finite differences, additive idempotents, polynomial reflection, weighted Cesàro estimates, calculus of even functions and isolated zeros, two-closures of permutation groups, semidirect products, small matrix identities, exponential Vandermonde systems, coordinatewise determinant integration, separated subsequences in pseudometric spaces, and the de Bruijn–Newman heat flow `H t` (`LemmaLib.NumberTheory.DeBruijnNewman`): Riemann's representation `H 0 z = ξ((1 + i z)/2) / 8` proved from Mathlib's completed zeta function, the heat-kernel formula `H t z = ∫ H 0 (z - 2i√t v) e^{-v²}/√π dv`, and Polymath15's effective Riemann–Siegel model with its approximation theorem reduced to the two Riemann–Siegel estimates `RtnEstimate` and `TailEstimate`.
+The initial library covers finite differences, additive idempotents, polynomial reflection, weighted Cesàro estimates, calculus of even functions and isolated zeros, the Euler–Maclaurin formula with a third-order remainder and Stirling's formula for the complex Gamma function with an explicit remainder, two-closures of permutation groups, semidirect products, small matrix identities, exponential Vandermonde systems, coordinatewise determinant integration, separated subsequences in pseudometric spaces, and the de Bruijn–Newman heat flow `H t` (`LemmaLib.NumberTheory.DeBruijnNewman`): Riemann's representation `H 0 z = ξ((1 + i z)/2) / 8` proved from Mathlib's completed zeta function, the heat-kernel formula `H t z = ∫ H 0 (z - 2i√t v) e^{-v²}/√π dv`, and Polymath15's effective Riemann–Siegel model with its approximation theorem reduced to the two Riemann–Siegel estimates `RtnEstimate` and `TailEstimate`.
 
 ## Contributing
 

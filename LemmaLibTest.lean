@@ -26,3 +26,6 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check exists_strictMono_dist_ge
 #check DeBruijnNewman.H_zero_eq_xi
 #check DeBruijnNewman.H_eq_integral_H_zero
+#check DeBruijnNewman.B_mul_f
+#check DeBruijnNewman.prefactor_log_le
+#check DeBruijnNewman.effectiveApproximation_of

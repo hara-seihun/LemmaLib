@@ -24,11 +24,12 @@ In the region `0 ≤ t ≤ 1/2`, `0 ≤ y ≤ 1`, `x ≥ 200` the theorem assert
 
 `H t (x + iy) = B t (x + iy) * (f t x y + O_≤ (errAB t x y + errC0 t x y))`.
 
-The analytic content of that statement (Riemann's integral representation of ξ, the Riemann–Siegel
-integral formula with Arias de Reyna's explicit remainder bounds, Boyd's effective Stirling
-approximation, and the Gaussian contour shifts of Polymath Section 6) is not yet formalised; it is
-recorded as the proposition `EffectiveApproximation`. Everything the consumer needs on top of it is
-proved here: `B t` never vanishes on the region, so the nonvanishing test
+The statement is recorded as the proposition `EffectiveApproximation`. It is derived in
+`LemmaLib.NumberTheory.DeBruijnNewman.EffectiveApproximation` from the two Riemann–Siegel inputs
+`RtnEstimate` and `TailEstimate` of `LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel` (Polymath
+Propositions 6.1 and 6.3, whose proofs through Arias de Reyna's explicit remainder bounds and
+Boyd's effective Stirling approximation are not yet formalised). Everything the consumer needs on
+top of it is proved here: `B t` never vanishes on the region, so the nonvanishing test
 `errAB + errC0 < ‖f‖ → H t (x + iy) ≠ 0` follows, and the explicit bounds on `‖gamma‖`, `Re sStar`
 and `‖kappa‖` hold unconditionally.
 -/
@@ -40,65 +41,65 @@ open Complex Real Finset
 namespace DeBruijnNewman
 
 /-- `α(s) = 1/(2s) + 1/(s-1) + ½ Log (s/(2π))`, the logarithmic derivative of `M₀`. -/
-noncomputable def alpha (s : ℂ) : ℂ :=
+@[expose] noncomputable def alpha (s : ℂ) : ℂ :=
   1 / (2 * s) + 1 / (s - 1) + 1 / 2 * Complex.log (s / (2 * π))
 
 /-- The derivative of `alpha`: `α'(s) = -1/(2s²) - 1/(s-1)² + 1/(2s)`. -/
-noncomputable def alpha' (s : ℂ) : ℂ :=
+@[expose] noncomputable def alpha' (s : ℂ) : ℂ :=
   -(1 / (2 * s ^ 2)) - 1 / (s - 1) ^ 2 + 1 / (2 * s)
 
 /-- Stirling's approximation to `(1/8) (s(s-1)/2) π^{-s/2} Γ(s/2)`:
 `M₀(s) = (s(s-1)/16) π^{-s/2} √(2π) exp ((s/2 - 1/2) Log (s/2) - s/2)`. -/
-noncomputable def M₀ (s : ℂ) : ℂ :=
+@[expose] noncomputable def M₀ (s : ℂ) : ℂ :=
   s * (s - 1) / 16 * (π : ℂ) ^ (-s / 2) * (Real.sqrt (2 * π) : ℂ) *
     Complex.exp ((s / 2 - 1 / 2) * Complex.log (s / 2) - s / 2)
 
 /-- The holomorphic branch of `log M₀` on `ℂ \ (-∞, 1]` used by Polymath (their (1.6)). -/
-noncomputable def logM₀ (s : ℂ) : ℂ :=
+@[expose] noncomputable def logM₀ (s : ℂ) : ℂ :=
   Complex.log s + Complex.log (s - 1) - s / 2 * Real.log π + Real.log (Real.sqrt (2 * π) / 16) +
     (s / 2 - 1 / 2) * Complex.log (s / 2) - s / 2
 
 /-- The heat deformation `M_t(s) = exp (t α(s)² / 4) M₀(s)`. -/
-noncomputable def M (t : ℝ) (s : ℂ) : ℂ :=
+@[expose] noncomputable def M (t : ℝ) (s : ℂ) : ℂ :=
   Complex.exp (t / 4 * alpha s ^ 2) * M₀ s
 
 /-- The normalising factor `B_t(x+iy) = M_t((1+y-ix)/2)`, written as `M_t((1 - iz)/2)`. -/
-noncomputable def B (t : ℝ) (z : ℂ) : ℂ :=
+@[expose] noncomputable def B (t : ℝ) (z : ℂ) : ℂ :=
   M t ((1 - I * z) / 2)
 
 /-- `s₊ = (1 + y - ix)/2`. -/
-noncomputable def sPlus (x y : ℝ) : ℂ := (1 + y - x * I) / 2
+@[expose] noncomputable def sPlus (x y : ℝ) : ℂ := (1 + y - x * I) / 2
 
 /-- `s₋ = (1 - y + ix)/2 = 1 - s₊`. -/
-noncomputable def sMinus (x y : ℝ) : ℂ := (1 - y + x * I) / 2
+@[expose] noncomputable def sMinus (x y : ℝ) : ℂ := (1 - y + x * I) / 2
 
 /-- The Riemann–Siegel cutoff `N = ⌊√(x/(4π) + t/16)⌋`. -/
-noncomputable def cutoff (t x : ℝ) : ℕ := ⌊Real.sqrt (x / (4 * π) + t / 16)⌋₊
+@[expose] noncomputable def cutoff (t x : ℝ) : ℕ := ⌊Real.sqrt (x / (4 * π) + t / 16)⌋₊
 
 /-- The heat-flow coefficients `b_n^t = exp (t log² n / 4)`. -/
-noncomputable def b (t : ℝ) (n : ℕ) : ℝ := Real.exp (t / 4 * Real.log n ^ 2)
+@[expose] noncomputable def b (t : ℝ) (n : ℕ) : ℝ := Real.exp (t / 4 * Real.log n ^ 2)
 
 /-- `s_* = s₊ + (t/2) α(s₊)`. -/
-noncomputable def sStar (t x y : ℝ) : ℂ := sPlus x y + t / 2 * alpha (sPlus x y)
+@[expose] noncomputable def sStar (t x y : ℝ) : ℂ := sPlus x y + t / 2 * alpha (sPlus x y)
 
 /-- `κ = (t/2) (α((1-y+ix)/2) - α((1+y+ix)/2))`. -/
-noncomputable def kappa (t x y : ℝ) : ℂ :=
+@[expose] noncomputable def kappa (t x y : ℝ) : ℂ :=
   t / 2 * (alpha ((1 - y + x * I) / 2) - alpha ((1 + y + x * I) / 2))
 
 /-- `γ = M_t((1-y+ix)/2) / M_t((1+y-ix)/2)`. -/
-noncomputable def gamma (t x y : ℝ) : ℂ :=
+@[expose] noncomputable def gamma (t x y : ℝ) : ℂ :=
   M t ((1 - y + x * I) / 2) / M t ((1 + y - x * I) / 2)
 
 /-- The two Riemann–Siegel-type sums
 `f_t(x+iy) = ∑_{n=1}^N b_n^t / n^{s_*} + γ ∑_{n=1}^N n^y b_n^t / n^{conj s_* + κ}`. -/
-noncomputable def f (t x y : ℝ) : ℂ :=
+@[expose] noncomputable def f (t x y : ℝ) : ℂ :=
   ∑ n ∈ Icc 1 (cutoff t x), (b t n : ℂ) / (n : ℂ) ^ sStar t x y +
     gamma t x y * ∑ n ∈ Icc 1 (cutoff t x),
       (n : ℂ) ^ (y : ℂ) * (b t n : ℂ) / (n : ℂ) ^ ((starRingEnd ℂ) (sStar t x y) + kappa t x y)
 
 /-- The bound `e_A + e_B ≤ ∑_{n=1}^N (1 + |γ| N^{|κ|} n^y) b_n^t n^{-Re s_*}
 (exp ((t²/16 log² (x/(4πn²)) + 0.626) / (x - 6.66)) - 1)` of Polymath (1.14). -/
-noncomputable def errAB (t x y : ℝ) : ℝ :=
+@[expose] noncomputable def errAB (t x y : ℝ) : ℝ :=
   ∑ n ∈ Icc 1 (cutoff t x),
     (1 + ‖gamma t x y‖ * (cutoff t x : ℝ) ^ ‖kappa t x y‖ * (n : ℝ) ^ y) *
       b t n / (n : ℝ) ^ (sStar t x y).re *
@@ -106,7 +107,7 @@ noncomputable def errAB (t x y : ℝ) : ℝ :=
 
 /-- The bound `e_{C,0} ≤ (x/4π)^{-(1+y)/4} exp (-(t/16) log² (x/4π) + 1.24 (3^y + 3^{-y}) / (N - 0.125)
 + (3 |log (x/4π) + iπ/2| + 10.44) / (x - 12))` of Polymath (1.15). -/
-noncomputable def errC0 (t x y : ℝ) : ℝ :=
+@[expose] noncomputable def errC0 (t x y : ℝ) : ℝ :=
   (x / (4 * π)) ^ (-(1 + y) / 4) *
     Real.exp (-(t / 16) * Real.log (x / (4 * π)) ^ 2 +
       1.24 * ((3 : ℝ) ^ y + (3 : ℝ) ^ (-y)) / ((cutoff t x : ℝ) - 0.125) +
@@ -124,7 +125,7 @@ structure InRegion (t x y : ℝ) : Prop where
 /-- Polymath Theorem 1.3 in multiplicative form: on the region,
 `‖H_t(x+iy) - B_t(x+iy) f_t(x+iy)‖ ≤ ‖B_t(x+iy)‖ (e_A + e_B + e_{C,0})`, with the error terms
 replaced by the explicit upper bounds (1.14) and (1.15). -/
-def EffectiveApproximation : Prop :=
+@[expose] def EffectiveApproximation : Prop :=
   ∀ t x y : ℝ, InRegion t x y →
     ‖H t (x + y * I) - B t (x + y * I) * f t x y‖ ≤ ‖B t (x + y * I)‖ * (errAB t x y + errC0 t x y)
 
@@ -303,7 +304,7 @@ theorem norm_M₀ {s : ℂ} (h0 : s ≠ 0) (h1 : s ≠ 1) : ‖M₀ s‖ = Real.
   rw [M₀_eq_exp_logM₀ h0 h1, Complex.norm_exp]
 
 /-- The holomorphic logarithm of `M t`: `log M_t(s) = (t/4) α(s)² + log M₀(s)`. -/
-noncomputable def logM (t : ℝ) (s : ℂ) : ℂ := t / 4 * alpha s ^ 2 + logM₀ s
+@[expose] noncomputable def logM (t : ℝ) (s : ℂ) : ℂ := t / 4 * alpha s ^ 2 + logM₀ s
 
 theorem norm_M {t : ℝ} {s : ℂ} (h0 : s ≠ 0) (h1 : s ≠ 1) : ‖M t s‖ = Real.exp (logM t s).re := by
   unfold M logM
@@ -812,12 +813,12 @@ theorem norm_gamma_le {t x y : ℝ} (ht0 : 0 ≤ t) (ht : t ≤ 1 / 2) (hy0 : 0 
 /-! ### The fully explicit error bound -/
 
 /-- The lower bound for `Re s_*` of `re_sStar_ge`. -/
-noncomputable def reSStarLower (t x y : ℝ) : ℝ :=
+@[expose] noncomputable def reSStarLower (t x y : ℝ) : ℝ :=
   (1 + y) / 2 + t / 4 * Real.log (x / (4 * π)) - t / 2 * (max (1 - 3 * y) 0 / x ^ 2)
 
 /-- `errAB` with `|γ|`, `|κ|` and `Re s_*` replaced by their explicit bounds; this is the
 quantity a certificate evaluates. -/
-noncomputable def errABExplicit (t x y : ℝ) : ℝ :=
+@[expose] noncomputable def errABExplicit (t x y : ℝ) : ℝ :=
   ∑ n ∈ Icc 1 (cutoff t x),
     (1 + Real.exp (0.02 * y) * (x / (4 * π)) ^ (-y / 2) *
         (cutoff t x : ℝ) ^ (t * y / (2 * (x - 6))) * (n : ℝ) ^ y) *

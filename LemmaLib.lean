@@ -20,10 +20,13 @@ public import LemmaLib.LinearAlgebra.Matrix.SkewSymmetric
 public import LemmaLib.LinearAlgebra.Vandermonde.Exponential
 public import LemmaLib.Logic.Function.Idempotent
 public import LemmaLib.MeasureTheory.Integral.Determinant
+public import LemmaLib.NumberTheory.DeBruijnNewman.AlphaBounds
 public import LemmaLib.NumberTheory.DeBruijnNewman.Basic
+public import LemmaLib.NumberTheory.DeBruijnNewman.EffectiveApproximation
 public import LemmaLib.NumberTheory.DeBruijnNewman.EffectiveModel
 public import LemmaLib.NumberTheory.DeBruijnNewman.Heat
 public import LemmaLib.NumberTheory.DeBruijnNewman.Kernel
+public import LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel
 public import LemmaLib.NumberTheory.DeBruijnNewman.Theta
 public import LemmaLib.NumberTheory.DeBruijnNewman.Xi
 public import LemmaLib.Topology.MetricSpace.Sequences

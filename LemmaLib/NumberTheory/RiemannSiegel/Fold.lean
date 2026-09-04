@@ -531,4 +531,67 @@ theorem foldIntegrand_conj_rsOmega_mul_neg_ofReal (s : ℂ) {x : ℝ} (hx : 0 < 
   rw [e1, e2, neg_neg, ← neg_sub (cexp (π * ω * x)), div_neg]
   ring
 
+/-! ### Folding the line integral into the Gaussian integral -/
+
+theorem integrable_foldIntegrand_conj_rsOmega_mul_ofReal {s : ℂ} (hs : 2 < s.re) :
+    Integrable fun x : ℝ => foldIntegrand s ((starRingEnd ℂ) ω * x) := by
+  obtain ⟨C, hC⟩ := exists_norm_foldIntegrand_le_gaussian hs.le (c := 1 / 2) (by norm_num)
+    (by norm_num)
+  have hβ : 0 ≤ (1 / 2 : ℝ) * (Real.sqrt 2 / 2) := by positivity
+  refine integrable_of_norm_le_gaussian (C := C) (by positivity : (0 : ℝ) < π / 2) ?_ fun x => ?_
+  · rw [continuous_iff_continuousAt]
+    intro x
+    have hmem : ((x : ℂ)).im ∈ Icc 0 ((1 / 2 : ℝ) * (Real.sqrt 2 / 2)) := by
+      rw [ofReal_im]; exact ⟨le_rfl, hβ⟩
+    have hF : ContinuousAt (fun v : ℂ => foldIntegrand s ((starRingEnd ℂ) ω * v)) x := by
+      rcases eq_or_ne (x : ℂ) 0 with h0 | h0
+      · rw [h0]; exact continuousAt_foldIntegrand_conj_rsOmega_mul_zero hs
+      · exact (differentiableAt_foldIntegrand_conj_rsOmega_mul (by norm_num) hmem h0).continuousAt
+    exact hF.comp Complex.continuous_ofReal.continuousAt
+  · have := hC x (by rw [uIcc_of_le hβ, ofReal_im]; exact ⟨le_rfl, hβ⟩)
+    rwa [ofReal_re] at this
+
+theorem integral_foldIntegrand_ray (s : ℂ) :
+    ∫ x in Ioi (0 : ℝ), foldIntegrand s ((starRingEnd ℂ) ω * x) =
+      (starRingEnd ℂ) ω ^ (s - 1) * gaussIntegral s := by
+  unfold gaussIntegral
+  rw [← integral_const_mul]
+  exact setIntegral_congr_fun measurableSet_Ioi fun x hx =>
+    foldIntegrand_conj_rsOmega_mul_ofReal s hx
+
+theorem integral_foldIntegrand_neg_ray (s : ℂ) :
+    ∫ x in Iic (0 : ℝ), foldIntegrand s ((starRingEnd ℂ) ω * x) =
+      -((-(starRingEnd ℂ) ω) ^ (s - 1) * gaussIntegral s) := by
+  have h := integral_comp_neg_Ioi 0 fun x : ℝ => foldIntegrand s ((starRingEnd ℂ) ω * x)
+  rw [neg_zero] at h
+  rw [← h]
+  unfold gaussIntegral
+  rw [← integral_const_mul, ← integral_neg]
+  exact setIntegral_congr_fun measurableSet_Ioi fun x hx =>
+    foldIntegrand_conj_rsOmega_mul_neg_ofReal s hx
+
+theorem integral_foldIntegrand_conj_rsOmega_mul {s : ℂ} (hs : 2 < s.re) :
+    ∫ x : ℝ, foldIntegrand s ((starRingEnd ℂ) ω * x) =
+      ((starRingEnd ℂ) ω ^ (s - 1) - (-(starRingEnd ℂ) ω) ^ (s - 1)) * gaussIntegral s := by
+  have hint := integrable_foldIntegrand_conj_rsOmega_mul_ofReal hs
+  rw [← intervalIntegral.integral_Iic_add_Ioi hint.integrableOn hint.integrableOn,
+    integral_foldIntegrand_ray,
+    integral_foldIntegrand_neg_ray]
+  ring
+
+/-- **The reflected Riemann–Siegel integral is a Gaussian integral.** For `Re s > 2` and
+`0 < c < 1`, `conj (R(1 - s̄, c)) = e^{-iπs/4} (1 + e^{iπs}) I₀(s)`. -/
+theorem conj_rsIntegral_one_sub {s : ℂ} (hs : 2 < s.re) {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1) :
+    (starRingEnd ℂ) (rsIntegral (1 - (starRingEnd ℂ) s) c) =
+      cexp (-(π * I * s / 4)) * (1 + cexp (π * I * s)) * gaussIntegral s := by
+  rw [conj_rsIntegral_one_sub_eq_integral_line s hc0, integral_foldIntegrand_line_eq_integral hs hc0
+    hc1, integral_foldIntegrand_conj_rsOmega_mul hs, conj_rsOmega_cpow, neg_conj_rsOmega_cpow,
+    conj_rsOmega_eq_exp, ← mul_assoc, mul_sub, ← Complex.exp_add, ← Complex.exp_add]
+  congr 2
+  rw [show -(π * I / 4) + -(π * I / 4) * (s - 1) = -(π * I * s / 4) by ring,
+    show -(π * I / 4) + 3 * π * I / 4 * (s - 1) = -(π * I * s / 4) + π * I * s + -(π * I) by ring,
+    Complex.exp_add, Complex.exp_add, Complex.exp_neg ((π : ℂ) * I), Complex.exp_pi_mul_I,
+    inv_neg, inv_one]
+  ring
+
 end RiemannSiegel

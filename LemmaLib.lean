@@ -36,6 +36,7 @@ public import LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel
 public import LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate
 public import LemmaLib.NumberTheory.DeBruijnNewman.Theta
 public import LemmaLib.NumberTheory.DeBruijnNewman.Xi
+public import LemmaLib.NumberTheory.RiemannSiegel.Fold
 public import LemmaLib.NumberTheory.RiemannSiegel.Integral
 public import LemmaLib.NumberTheory.RiemannSiegel.Mellin
 public import LemmaLib.Topology.MetricSpace.Sequences

@@ -14,12 +14,14 @@ public import LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate
 
 This file assembles Polymath Theorem 1.3 (*Effective approximation of heat flow evolution of the
 Riemann ξ function*, Res. Math. Sci. 6 (2019)) from the two analytic inputs `RtnEstimate` and
-`TailEstimate` of `LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel`:
+`TailEstimateWith K` of `LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel`:
 
-`effectiveApproximation_of : RtnEstimate → TailEstimate → EffectiveApproximation`.
+`effectiveApproximation_of : 0 ≤ K → RtnEstimate → TailEstimateWith K → EffectiveApproximationWith K`.
 
 Since `RtnEstimate` is proved in `LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate`, the theorem
-reduces to `TailEstimate` alone (`effectiveApproximation_of_tail`).
+reduces to `TailEstimateWith K` alone (`effectiveApproximation_of_tail`);
+`LemmaLib.NumberTheory.DeBruijnNewman.TailEstimate` proves `TailEstimateWith 20` and hence
+`EffectiveApproximationWith 20` unconditionally.
 
 The proof follows Section 6 of Polymath. The error `e_A + e_B` of the main terms is bounded
 termwise by `errAB` (`termA_le`, `termB_le`, via the bound (6.12)–(6.13) on `ε_{t,n}` in
@@ -511,15 +513,15 @@ theorem termA_le (hR : RtnEstimate) {t x y : ℝ} (hr : InRegion t x y) {n : ℕ
 
 /-! ### The effective approximation -/
 
-/-- Polymath Theorem 1.3 (in the form `EffectiveApproximation`), assuming the Riemann–Siegel
-inputs `RtnEstimate` (Proposition 6.1) and `TailEstimate` (the expansion (5.4) with the
-remainder bound of Proposition 6.3). -/
-theorem effectiveApproximation_of (hR : RtnEstimate) (hT : TailEstimate) :
-    EffectiveApproximation := by
+/-- Polymath Theorem 1.3 (in the form `EffectiveApproximationWith K`), assuming the
+Riemann–Siegel inputs `RtnEstimate` (Proposition 6.1) and `TailEstimateWith K` (the expansion
+(5.4) with the remainder bound of Proposition 6.3, weakened by the factor `K ≥ 0`). -/
+theorem effectiveApproximation_of {K : ℝ} (hK : 0 ≤ K) (hR : RtnEstimate)
+    (hT : TailEstimateWith K) : EffectiveApproximationWith K := by
   intro t x y hr
   have hx0 : 0 < x := by linarith [hr.x_ge]
   rw [B_mul_f t x y hx0.ne', B_apply]
-  have htail := (hT t x y hr).trans (tail_le hr)
+  have htail := (hT t x y hr).trans (mul_le_mul_of_nonneg_left (tail_le hr) hK)
   have hA := fun n (hn : n ∈ Finset.Icc 1 (cutoff t x)) => termA_le hR hr hn
   have hB := fun n (hn : n ∈ Finset.Icc 1 (cutoff t x)) => termB_le hR hr hn
   unfold errAB
@@ -539,12 +541,12 @@ theorem effectiveApproximation_of (hR : RtnEstimate) (hT : TailEstimate) :
         ‖∑ n ∈ Icc 1 N, (r t n (sMinus x y) - mainTerm t n (sMinus x y))‖ +
         ‖∑ n ∈ Icc 1 N, ((starRingEnd ℂ) (r t n ((starRingEnd ℂ) (sPlus x y))) -
           mainTerm t n (sPlus x y))‖ := norm_add₃_le
-    _ ≤ Mp * errC0 t x y +
+    _ ≤ K * (Mp * errC0 t x y) +
         ∑ n ∈ Icc 1 N, ‖r t n (sMinus x y) - mainTerm t n (sMinus x y)‖ +
         ∑ n ∈ Icc 1 N, ‖(starRingEnd ℂ) (r t n ((starRingEnd ℂ) (sPlus x y))) -
           mainTerm t n (sPlus x y)‖ := by
         exact add_le_add (add_le_add htail (norm_sum_le _ _)) (norm_sum_le _ _)
-    _ ≤ Mp * errC0 t x y +
+    _ ≤ K * (Mp * errC0 t x y) +
         ∑ n ∈ Icc 1 N, Mp * (‖gamma t x y‖ * (N : ℝ) ^ ‖kappa t x y‖ * (n : ℝ) ^ y *
           b t n / (n : ℝ) ^ (sStar t x y).re *
           (Real.exp ((t ^ 2 / 16 * Real.log (x / (4 * π * (n : ℝ) ^ 2)) ^ 2 + 0.626) / (x - 6.66))
@@ -571,8 +573,10 @@ theorem effectiveApproximation_of (hR : RtnEstimate) (hT : TailEstimate) :
         rw [← Finset.mul_sum, ← Finset.mul_sum, ← hsum, Finset.sum_add_distrib]
         ring
 
-/-- Polymath Theorem 1.3, assuming only the Riemann–Siegel expansion `TailEstimate`. -/
-theorem effectiveApproximation_of_tail (hT : TailEstimate) : EffectiveApproximation :=
-  effectiveApproximation_of rtnEstimate hT
+/-- Polymath Theorem 1.3 with the tail constant `K`, assuming only the Riemann–Siegel expansion
+`TailEstimateWith K`. -/
+theorem effectiveApproximation_of_tail {K : ℝ} (hK : 0 ≤ K) (hT : TailEstimateWith K) :
+    EffectiveApproximationWith K :=
+  effectiveApproximation_of hK rtnEstimate hT
 
 end DeBruijnNewman

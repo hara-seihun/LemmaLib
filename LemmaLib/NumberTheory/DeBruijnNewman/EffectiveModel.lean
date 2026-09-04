@@ -114,6 +114,11 @@ namespace DeBruijnNewman
       1.24 * ((3 : ℝ) ^ y + (3 : ℝ) ^ (-y)) / ((cutoff t x : ℝ) - 0.125) +
       (3 * Real.sqrt (Real.log (x / (4 * π)) ^ 2 + (π / 2) ^ 2) + 10.44) / (x - 12))
 
+theorem errC0_nonneg {t x y : ℝ} (hx : 0 ≤ x) : 0 ≤ errC0 t x y := by
+  unfold errC0
+  have := Real.rpow_nonneg (show (0 : ℝ) ≤ x / (4 * π) by positivity) (-(1 + y) / 4)
+  positivity
+
 /-- The region of Polymath Theorem 1.3, with `t = 0` included (the theorem is stated there for
 `t > 0`; the `t = 0` case follows by continuity in `t`, since `N` is right-continuous in `t`). -/
 structure InRegion (t x y : ℝ) : Prop where
@@ -123,12 +128,22 @@ structure InRegion (t x y : ℝ) : Prop where
   y_le : y ≤ 1
   x_ge : 200 ≤ x
 
-/-- Polymath Theorem 1.3 in multiplicative form: on the region,
-`‖H_t(x+iy) - B_t(x+iy) f_t(x+iy)‖ ≤ ‖B_t(x+iy)‖ (e_A + e_B + e_{C,0})`, with the error terms
+/-- Polymath Theorem 1.3 in multiplicative form with the tail constant `K`: on the region,
+`‖H_t(x+iy) - B_t(x+iy) f_t(x+iy)‖ ≤ ‖B_t(x+iy)‖ (e_A + e_B + K e_{C,0})`, with the error terms
 replaced by the explicit upper bounds (1.14) and (1.15). -/
-@[expose] def EffectiveApproximation : Prop :=
+@[expose] def EffectiveApproximationWith (K : ℝ) : Prop :=
   ∀ t x y : ℝ, InRegion t x y →
-    ‖H t (x + y * I) - B t (x + y * I) * f t x y‖ ≤ ‖B t (x + y * I)‖ * (errAB t x y + errC0 t x y)
+    ‖H t (x + y * I) - B t (x + y * I) * f t x y‖ ≤
+      ‖B t (x + y * I)‖ * (errAB t x y + K * errC0 t x y)
+
+/-- Polymath Theorem 1.3 as stated, with the tail constant `1`. -/
+@[expose] def EffectiveApproximation : Prop := EffectiveApproximationWith 1
+
+theorem EffectiveApproximationWith.mono {K K' : ℝ} (hK : K ≤ K') (h : EffectiveApproximationWith K) :
+    EffectiveApproximationWith K' := fun t x y hr =>
+  (h t x y hr).trans (mul_le_mul_of_nonneg_left
+    (add_le_add le_rfl (mul_le_mul_of_nonneg_right hK (errC0_nonneg (by linarith [hr.x_ge]))))
+    (norm_nonneg _))
 
 /-! ### `B t` never vanishes -/
 
@@ -163,10 +178,11 @@ theorem B_ne_zero (t : ℝ) {z : ℂ} (hz : z.re ≠ 0) : B t z ≠ 0 := by
 
 /-! ### The nonvanishing test -/
 
-/-- Polymath Corollary 1.4: if `|f_t(x+iy)| > e_A + e_B + e_{C,0}` then `H_t(x+iy) ≠ 0`. This is
-the only consequence of Theorem 1.3 the certificate uses. -/
-theorem H_ne_zero_of_lt_norm_f (happrox : EffectiveApproximation) {t x y : ℝ}
-    (hr : InRegion t x y) (hf : errAB t x y + errC0 t x y < ‖f t x y‖) : H t (x + y * I) ≠ 0 := by
+/-- Polymath Corollary 1.4: if `|f_t(x+iy)| > e_A + e_B + K e_{C,0}` then `H_t(x+iy) ≠ 0`. This
+is the only consequence of Theorem 1.3 the certificate uses. -/
+theorem H_ne_zero_of_lt_norm_f {K : ℝ} (happrox : EffectiveApproximationWith K) {t x y : ℝ}
+    (hr : InRegion t x y) (hf : errAB t x y + K * errC0 t x y < ‖f t x y‖) :
+    H t (x + y * I) ≠ 0 := by
   intro hH
   have hB : B t (x + y * I) ≠ 0 := B_ne_zero t (by simp; linarith [hr.x_ge])
   have hBpos : 0 < ‖B t (x + y * I)‖ := norm_pos_iff.mpr hB
@@ -873,8 +889,8 @@ theorem errAB_le_errABExplicit {t x y : ℝ} (hr : InRegion t x y) :
 
 /-- The nonvanishing test in the form a certificate checks: every quantity in
 `errABExplicit t x y + errC0 t x y` is an explicit real function of `(t, x, y)`. -/
-theorem H_ne_zero_of_lt_norm_f' (happrox : EffectiveApproximation) {t x y : ℝ}
-    (hr : InRegion t x y) (hf : errABExplicit t x y + errC0 t x y < ‖f t x y‖) :
+theorem H_ne_zero_of_lt_norm_f' {K : ℝ} (happrox : EffectiveApproximationWith K) {t x y : ℝ}
+    (hr : InRegion t x y) (hf : errABExplicit t x y + K * errC0 t x y < ‖f t x y‖) :
     H t (x + y * I) ≠ 0 :=
   H_ne_zero_of_lt_norm_f happrox hr (by linarith [errAB_le_errABExplicit hr])
 

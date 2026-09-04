@@ -15,7 +15,9 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 This file records the two analytic inputs of Polymath Theorem 1.3 (*Effective approximation of
 heat flow evolution of the Riemann ξ function*, Res. Math. Sci. 6 (2019)) as propositions, and
 the algebra that connects them to the model `B t * f t x y`. `RtnEstimate` is proved in
-`LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate`; `TailEstimate` is not yet formalised.
+`LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate`; `TailEstimateWith 20` is proved in
+`LemmaLib.NumberTheory.DeBruijnNewman.TailEstimate` (the constant `1` of Polymath's Proposition
+6.3, `TailEstimate`, would need Arias de Reyna's explicit Riemann–Siegel remainder bounds).
 
 * `r₀ n s` is the `n`-th term `(1/8) (s(s-1)/2) π^{-s/2} Γ(s/2) n^{-s}` of the Riemann–Siegel
   expansion of `ξ(s)/8`, and `r t n s` is its heat flow (Polymath (5.2)).
@@ -23,8 +25,9 @@ the algebra that connects them to the model `B t * f t x y`. `RtnEstimate` is pr
   Polymath Proposition 6.1, and `epsR t n s` its relative error (6.3).
 * `epsTilde t s` is the error term (6.6) of the tail of the Riemann–Siegel expansion.
 * `RtnEstimate` is Proposition 6.1 (`r t n s = mainTerm t n s (1 + O_≤(epsR t n s))`), and
-  `TailEstimate` is the expansion (5.4) of `H t` together with Proposition 6.3 and the bound
-  `|C₀(p)| ≤ 1/2` on the Riemann–Siegel kernel.
+  `TailEstimateWith K` is the expansion (5.4) of `H t` together with the remainder bound of
+  Proposition 6.3 (with the bound `|C₀(p)| ≤ 1/2` on the Riemann–Siegel kernel) weakened by
+  the factor `K`; `TailEstimate` is the case `K = 1`.
 
 The remaining results are unconditional: `B t (x + iy) * f t x y` is the sum of the main terms at
 `s₊` and `s₋` (`B_mul_f`), and the main terms are compatible with complex conjugation.
@@ -66,16 +69,20 @@ for `0 ≤ t ≤ 1/2`, `n ≥ 1` and `Im s > 10`. -/
   ∀ (t : ℝ) (n : ℕ) (s : ℂ), 0 ≤ t → t ≤ 1 / 2 → 1 ≤ n → 10 < s.im →
     ‖r t n s - mainTerm t n s‖ ≤ ‖mainTerm t n s‖ * epsR t n s
 
-/-- The Riemann–Siegel expansion of `H t` (Polymath (5.4)) together with the estimate of its
-remainder (Proposition 6.3 and `|C₀(p)| ≤ 1/2`): the part of `H_t(x+iy)` beyond the two sums
-`∑ r_{t,n}(s₋) + ∑ r_{t,n}^*(s₊)` is at most `exp (tπ²/64) |M₀(iT')| (1 + ε~(s₋) + ε~(s₊))`,
-where `T' = x/2 + πt/8`. -/
-@[expose] def TailEstimate : Prop :=
+/-- The Riemann–Siegel expansion of `H t` (Polymath (5.4)) together with an estimate of its
+remainder: the part of `H_t(x+iy)` beyond the two sums `∑ r_{t,n}(s₋) + ∑ r_{t,n}^*(s₊)` is at
+most `K` times `exp (tπ²/64) |M₀(iT')| (1 + ε~(s₋) + ε~(s₊))`, where `T' = x/2 + πt/8`. -/
+@[expose] def TailEstimateWith (K : ℝ) : Prop :=
   ∀ t x y : ℝ, InRegion t x y →
     ‖H t (x + y * I) - ∑ n ∈ Icc 1 (cutoff t x), r t n (sMinus x y)
         - ∑ n ∈ Icc 1 (cutoff t x), (starRingEnd ℂ) (r t n ((starRingEnd ℂ) (sPlus x y)))‖ ≤
-      Real.exp (t * π ^ 2 / 64) * ‖M₀ (((x / 2 + π * t / 8 : ℝ) : ℂ) * I)‖ *
-        (1 + epsTilde t (sMinus x y) + epsTilde t ((starRingEnd ℂ) (sPlus x y)))
+      K * (Real.exp (t * π ^ 2 / 64) * ‖M₀ (((x / 2 + π * t / 8 : ℝ) : ℂ) * I)‖ *
+        (1 + epsTilde t (sMinus x y) + epsTilde t ((starRingEnd ℂ) (sPlus x y))))
+
+/-- The tail estimate with the constant `1` of Polymath: the expansion (5.4) together with
+Proposition 6.3 and the bound `|C₀(p)| ≤ 1/2` on the Riemann–Siegel kernel. -/
+@[expose] def TailEstimate : Prop := TailEstimateWith 1
+
 
 /-! ### Conjugation symmetries -/
 
@@ -196,5 +203,27 @@ theorem B_mul_f (t x y : ℝ) (hx : x ≠ 0) :
     unfold mainTerm
     rw [conj_sStar_add_kappa t x y hx, Complex.cpow_add _ _ hn0]
     field_simp
+
+/-! ### Monotonicity in the tail constant -/
+
+theorem epsTilde_nonneg {t : ℝ} {s : ℂ} (ht : 0 ≤ t) (hs : 100 ≤ s.im) : 0 ≤ epsTilde t s := by
+  unfold epsTilde
+  have hpi := Real.pi_lt_d2
+  have hpi' := Real.pi_gt_d2
+  have h1 : (0.865 : ℝ) < Real.sqrt ((s.im + π * t / 8) / (2 * π)) := by
+    rw [Real.lt_sqrt (by norm_num), lt_div_iff₀ (by positivity)]
+    nlinarith
+  have h2 : 0 ≤ 0.397 * (9 : ℝ) ^ s.re / (Real.sqrt ((s.im + π * t / 8) / (2 * π)) - 0.865) := by
+    apply div_nonneg (by positivity); linarith
+  have h3 : 0 ≤ 5 / (3 * (s.im - 6)) := by apply div_nonneg (by norm_num); linarith
+  positivity
+
+theorem TailEstimateWith.mono {K K' : ℝ} (hK : K ≤ K') (h : TailEstimateWith K) :
+    TailEstimateWith K' := fun t x y hr => by
+  refine (h t x y hr).trans (mul_le_mul_of_nonneg_right hK ?_)
+  have h1 := epsTilde_nonneg (s := sMinus x y) hr.t_nonneg (by rw [im_sMinus]; linarith [hr.x_ge])
+  have h2 := epsTilde_nonneg (s := (starRingEnd ℂ) (sPlus x y)) hr.t_nonneg
+    (by rw [im_conj_sPlus]; linarith [hr.x_ge])
+  positivity
 
 end DeBruijnNewman

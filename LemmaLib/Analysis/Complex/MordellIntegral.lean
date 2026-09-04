@@ -20,7 +20,12 @@ for `Re τ > 0`, and proves its two functional equations:
 
 * `mordell_add_one`: `mordell τ (z + 1) c = mordell τ z c + (Gaussian integral)`,
 * `mordell_eq_mordell_sub_one_sub_one`: for `0 < c < 1`,
-  `mordell τ z c = mordell τ z (c - 1) - 1`, the residue of the pole at `u = 0`.
+  `mordell τ z c = mordell τ z (c - 1) - 1`, the residue of the pole at `u = 0`,
+
+together with the shift relation `mordell_add_one_right` (`u ↦ u + 1`), the residue of the pole at
+`u = 1` (`mordell_add_one_right_eq_add`), and the resulting closed form at `τ = 1`
+(`mordell_one`):
+`mordell 1 z c = (e^{2πiz} - e^{-πiz² + πiz}) / (1 - e^{2πiz})`.
 
 These are the ingredients of Siegel's derivation of the Riemann–Siegel integral formula.
 
@@ -36,7 +41,8 @@ These are the ingredients of Siegel's derivation of the Riemann–Siegel integra
   nearest integer to `Re u`.
 * `Complex.integrable_mordellIntegrand_line`: the integrand is integrable along every line
   `c - ω x` with `c` not an integer.
-* `Complex.mordell_add_one`, `Complex.mordell_eq_mordell_sub_one_sub_one`.
+* `Complex.mordell_add_one`, `Complex.mordell_eq_mordell_sub_one_sub_one`,
+  `Complex.mordell_add_one_right_eq_add`, `Complex.mordell_one`.
 -/
 
 public section
@@ -618,5 +624,75 @@ theorem mordell_eq_mordell_sub_one_sub_one {τ z : ℂ} (hτ : 0 < τ.re) {c : �
   have : 2 * (π : ℂ) * I * (1 / (2 * π * I)) = 1 := by field_simp
   rw [this] at key
   linear_combination -key
+
+theorem mordellIntegrand_add_one (τ z u : ℂ) :
+    mordellIntegrand τ z (u + 1) =
+      -cexp (2 * π * I * z + π * I * τ) * mordellIntegrand τ (z + τ) u := by
+  unfold mordellIntegrand
+  have e1 : mordellExponent τ z (u + 1) =
+      mordellExponent τ (z + τ) u + (2 * π * I * z + π * I * τ) := by
+    unfold mordellExponent; ring
+  have e2 : cexp (π * I * (u + 1)) = -cexp (π * I * u) := by
+    rw [mul_add, mul_one, Complex.exp_add, Complex.exp_pi_mul_I]; ring
+  have e3 : cexp (-(π * I * (u + 1))) = -cexp (-(π * I * u)) := by
+    rw [show -(π * I * (u + 1)) = -(π * I * u) + -(π * I) by ring, Complex.exp_add,
+      Complex.exp_neg (π * I), Complex.exp_pi_mul_I]; ring
+  rw [e1, e2, e3, Complex.exp_add,
+    show -cexp (π * I * u) - -cexp (-(π * I * u)) =
+      -(cexp (π * I * u) - cexp (-(π * I * u))) by ring, div_neg]
+  ring
+
+/-- Shifting the line one unit to the right:
+`mordell τ z (c + 1) = -e^{2πiz + πiτ} mordell τ (z + τ) c`. -/
+theorem mordell_add_one_right (τ z : ℂ) (c : ℝ) :
+    mordell τ z (c + 1) = -cexp (2 * π * I * z + π * I * τ) * mordell τ (z + τ) c := by
+  unfold mordell
+  rw [← integral_const_mul]
+  congr 1; ext x
+  rw [show ((c + 1 : ℝ) : ℂ) - ω * x = ((c : ℂ) - ω * x) + 1 by push_cast; ring,
+    mordellIntegrand_add_one]
+  ring
+
+/-- Crossing the pole at `u = 1`: for `0 < c < 1`,
+`mordell τ z (c + 1) = mordell τ z c + e^{2πiz + πiτ}`. -/
+theorem mordell_add_one_right_eq_add {τ z : ℂ} (hτ : 0 < τ.re) {c : ℝ} (hc0 : 0 < c)
+    (hc1 : c < 1) :
+    mordell τ z (c + 1) = mordell τ z c + cexp (2 * π * I * z + π * I * τ) := by
+  have h1 := mordell_add_one_right τ z c
+  have h2 := mordell_eq_mordell_sub_one_sub_one (τ := τ) (z := z + τ) hτ hc0 hc1
+  have h3 := mordell_add_one_right τ z (c - 1)
+  rw [sub_add_cancel] at h3
+  linear_combination h1 - cexp (2 * π * I * z + π * I * τ) * h2 - h3
+
+theorem ne_int_of_mem_Ioo {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1) : ∀ n : ℤ, c ≠ n := by
+  intro n h
+  have h1 : (0 : ℝ) < n := h ▸ hc0
+  have h2 : (n : ℝ) < 1 := h ▸ hc1
+  have h1' : (0 : ℤ) < n := by exact_mod_cast h1
+  have h2' : n < (1 : ℤ) := by exact_mod_cast h2
+  omega
+
+/-- The closed form of the Mordell integral at `τ = 1`. -/
+theorem mordell_one {z : ℂ} {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1) (hz : cexp (2 * π * I * z) ≠ 1) :
+    mordell 1 z c = (cexp (2 * π * I * z) - cexp (-(π * I * z ^ 2) + π * I * z)) /
+      (1 - cexp (2 * π * I * z)) := by
+  have h1 := mordell_add_one (τ := 1) (z := z) (by simp) (ne_int_of_mem_Ioo hc0 hc1)
+  have h2 := mordell_add_one_right 1 z c
+  have h3 := mordell_add_one_right_eq_add (τ := 1) (z := z) (by simp) hc0 hc1
+  have hK : cexp (2 * π * I * z + π * I * 1) = -cexp (2 * π * I * z) := by
+    rw [mul_one, Complex.exp_add, Complex.exp_pi_mul_I]; ring
+  have hg : -ω * (1 / (1 : ℂ)) ^ (1 / 2 : ℂ) * cexp (-(π * I * (z + 1 / 2) ^ 2 / 1)) =
+      -cexp (-(π * I * z ^ 2) - π * I * z) := by
+    simp only [div_one, one_div, Complex.one_cpow, mul_one]
+    unfold Complex.rsOmega
+    rw [neg_mul, ← Complex.exp_add]
+    congr 2; ring
+  rw [hK] at h2 h3
+  rw [hg] at h1
+  have hge : cexp (2 * π * I * z) * cexp (-(π * I * z ^ 2) - π * I * z) =
+      cexp (-(π * I * z ^ 2) + π * I * z) := by
+    rw [← Complex.exp_add]; congr 1; ring
+  rw [eq_div_iff (sub_ne_zero.mpr (Ne.symm hz))]
+  linear_combination (-1 : ℂ) * h3 + h2 + cexp (2 * π * I * z) * h1 - hge
 
 end Complex

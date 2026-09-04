@@ -14,6 +14,7 @@ public import LemmaLib.Analysis.Calculus.ZeroIsolation
 public import LemmaLib.Analysis.Complex.ContourShift
 public import LemmaLib.Analysis.Complex.MordellIntegral
 public import LemmaLib.Analysis.Complex.RiemannSiegelLine
+public import LemmaLib.Analysis.SpecialFunctions.GammaIntegralComplexScale
 public import LemmaLib.NumberTheory.RiemannSiegel.Integral
 public import LemmaLib.Analysis.EulerMaclaurin
 public import LemmaLib.Analysis.SpecialFunctions.Gamma.Stirling

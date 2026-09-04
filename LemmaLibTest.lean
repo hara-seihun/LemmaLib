@@ -38,3 +38,4 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check Complex.integral_rsLine_sub_eq_of_pole
 #check RiemannSiegel.rsIntegral_add_half
 #check RiemannSiegel.differentiable_rsIntegral
+#check Complex.integral_cpow_mul_exp_neg_mul_Ioi_of_re_pos

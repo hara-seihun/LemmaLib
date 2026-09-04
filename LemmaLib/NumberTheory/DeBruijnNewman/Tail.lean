@@ -186,4 +186,145 @@ theorem norm_remainder_le {T c σ : ℝ} {N : ℕ} (hT : 3 < T) (hc : (N : ℝ) 
         simp only [Real.exp_add]
         ring
 
+
+/-! ### Gaussian integrals of `exp (quadratic)` -/
+
+theorem exp_quadratic_mul_gauss (κ L A v : ℝ) :
+    Real.exp (κ * v ^ 2 + L * v + A) * gauss v =
+      Real.exp A / Real.sqrt π * Real.exp (L * v - (1 - κ) * v ^ 2) := by
+  unfold gauss
+  rw [mul_div_assoc', ← Real.exp_add, div_mul_eq_mul_div, ← Real.exp_add]
+  congr 2
+  ring
+
+theorem integrable_exp_quadratic_mul_gauss {κ : ℝ} (hκ : κ < 1) (L A : ℝ) :
+    Integrable fun v : ℝ => Real.exp (κ * v ^ 2 + L * v + A) * gauss v := by
+  simp_rw [exp_quadratic_mul_gauss]
+  exact (integrable_exp_quadratic (by linarith) L).const_mul _
+
+theorem integral_exp_quadratic_mul_gauss {κ : ℝ} (hκ : κ < 1) (L A : ℝ) :
+    ∫ v : ℝ, Real.exp (κ * v ^ 2 + L * v + A) * gauss v =
+      Real.exp (A + L ^ 2 / (4 * (1 - κ))) / Real.sqrt (1 - κ) := by
+  simp_rw [exp_quadratic_mul_gauss]
+  rw [integral_const_mul, integral_exp_quadratic (by linarith), Real.sqrt_div' _ (by linarith),
+    Real.exp_add]
+  have := Real.sqrt_pos.2 Real.pi_pos
+  field_simp
+
+/-- `gaussJ t σ α β = ∫ exp (α (σ + √t v) + β (σ + √t v)²) gauss v dv` in closed form. -/
+@[expose] noncomputable def gaussJ (t σ α β : ℝ) : ℝ :=
+  Real.exp (α * σ + β * σ ^ 2 + t * (α + 2 * β * σ) ^ 2 / (4 * (1 - β * t))) /
+    Real.sqrt (1 - β * t)
+
+theorem exp_shift_eq (t σ α β v : ℝ) (ht : 0 ≤ t) :
+    Real.exp (α * (σ + Real.sqrt t * v) + β * (σ + Real.sqrt t * v) ^ 2) =
+      Real.exp (β * t * v ^ 2 + Real.sqrt t * (α + 2 * β * σ) * v + (α * σ + β * σ ^ 2)) := by
+  congr 1
+  have := Real.sq_sqrt ht
+  ring_nf
+  rw [this]
+  ring
+
+theorem integrable_exp_shift_mul_gauss {t β : ℝ} (ht : 0 ≤ t) (hβ : β * t < 1) (σ α : ℝ) :
+    Integrable fun v : ℝ =>
+      Real.exp (α * (σ + Real.sqrt t * v) + β * (σ + Real.sqrt t * v) ^ 2) * gauss v := by
+  simp_rw [exp_shift_eq t σ α β _ ht]
+  exact integrable_exp_quadratic_mul_gauss hβ _ _
+
+theorem integral_exp_shift_mul_gauss {t β : ℝ} (ht : 0 ≤ t) (hβ : β * t < 1) (σ α : ℝ) :
+    ∫ v : ℝ, Real.exp (α * (σ + Real.sqrt t * v) + β * (σ + Real.sqrt t * v) ^ 2) * gauss v =
+      gaussJ t σ α β := by
+  simp_rw [exp_shift_eq t σ α β _ ht]
+  rw [integral_exp_quadratic_mul_gauss hβ]
+  unfold gaussJ
+  have e : (Real.sqrt t * (α + 2 * β * σ)) ^ 2 = t * (α + 2 * β * σ) ^ 2 := by
+    rw [mul_pow, Real.sq_sqrt ht]
+  rw [e, add_assoc]
+
+/-! ### The heat flow of the majorant -/
+
+/-- `tailK` as a sum of two exponentials of quadratics in `σ`. -/
+theorem tailK_eq (T c σ : ℝ) (hc : 0 < c) :
+    tailK T c σ =
+      Real.exp (1 / (6 * (T - 0.8))) * (Real.sqrt 2 * Real.sqrt (π / lineA c T)) *
+        (Real.exp (lineB c T ^ 2 / (4 * lineA c T)) *
+          Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c + Real.log 2 / 2) * σ +
+            1 / (4 * T - 12) * σ ^ 2) +
+        2 / Real.sqrt 3 * Real.exp (lineB c T ^ 2 / (3 * lineA c T)) *
+          Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c) * σ +
+            (1 / (4 * T - 12) + 1 / (lineA c T * c ^ 2)) * σ ^ 2)) := by
+  unfold tailK
+  have h2 : (2 : ℝ) ^ (σ / 2) = Real.exp (Real.log 2 / 2 * σ) := by
+    rw [Real.rpow_def_of_pos (by norm_num)]; ring_nf
+  have e1 : Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c + Real.log 2 / 2) * σ +
+      1 / (4 * T - 12) * σ ^ 2) =
+      Real.exp (σ * ((alpha ((T : ℂ) * I)).re - Real.log c) + σ ^ 2 / (4 * T - 12)) *
+        Real.exp (Real.log 2 / 2 * σ) := by
+    rw [← Real.exp_add]; congr 1; ring
+  have e2 : Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c) * σ +
+      (1 / (4 * T - 12) + 1 / (lineA c T * c ^ 2)) * σ ^ 2) =
+      Real.exp (σ * ((alpha ((T : ℂ) * I)).re - Real.log c) + σ ^ 2 / (4 * T - 12)) *
+        Real.exp (σ ^ 2 / (lineA c T * c ^ 2)) := by
+    rw [← Real.exp_add]; congr 1; ring
+  rw [e1, e2, h2]
+  ring
+
+/-- The closed form of `∫ tailK T c (σ + √t v) gauss v dv`. -/
+@[expose] noncomputable def tailIntegral (t T c σ : ℝ) : ℝ :=
+  Real.exp (1 / (6 * (T - 0.8))) * (Real.sqrt 2 * Real.sqrt (π / lineA c T)) *
+    (Real.exp (lineB c T ^ 2 / (4 * lineA c T)) *
+      gaussJ t σ ((alpha ((T : ℂ) * I)).re - Real.log c + Real.log 2 / 2) (1 / (4 * T - 12)) +
+    2 / Real.sqrt 3 * Real.exp (lineB c T ^ 2 / (3 * lineA c T)) *
+      gaussJ t σ ((alpha ((T : ℂ) * I)).re - Real.log c)
+        (1 / (4 * T - 12) + 1 / (lineA c T * c ^ 2)))
+
+theorem integrable_tailK_mul_gauss {t T c : ℝ} (ht : 0 ≤ t) (hc : 0 < c) (hT : 3 < T)
+    (hA : 0 < lineA c T) (hβ : (1 / (4 * T - 12) + 1 / (lineA c T * c ^ 2)) * t < 1) (σ : ℝ) :
+    Integrable fun v : ℝ => tailK T c (σ + Real.sqrt t * v) * gauss v := by
+  simp_rw [tailK_eq T c _ hc]
+  have hβ1 : 1 / (4 * T - 12) * t < 1 := by
+    have : 0 ≤ 1 / (lineA c T * c ^ 2) * t := by positivity
+    linarith
+  have h1 := (integrable_exp_shift_mul_gauss ht hβ1 σ
+    ((alpha ((T : ℂ) * I)).re - Real.log c + Real.log 2 / 2)).const_mul
+    (Real.exp (lineB c T ^ 2 / (4 * lineA c T)))
+  have h2 := (integrable_exp_shift_mul_gauss ht hβ σ
+    ((alpha ((T : ℂ) * I)).re - Real.log c)).const_mul
+    (2 / Real.sqrt 3 * Real.exp (lineB c T ^ 2 / (3 * lineA c T)))
+  have := ((h1.add h2).const_mul
+    (Real.exp (1 / (6 * (T - 0.8))) * (Real.sqrt 2 * Real.sqrt (π / lineA c T))))
+  refine this.congr (Filter.Eventually.of_forall fun v => ?_)
+  simp only [Pi.add_apply]
+  ring
+
+theorem integral_tailK_mul_gauss {t T c : ℝ} (ht : 0 ≤ t) (hc : 0 < c) (hT : 3 < T)
+    (hA : 0 < lineA c T) (hβ : (1 / (4 * T - 12) + 1 / (lineA c T * c ^ 2)) * t < 1) (σ : ℝ) :
+    ∫ v : ℝ, tailK T c (σ + Real.sqrt t * v) * gauss v = tailIntegral t T c σ := by
+  simp_rw [tailK_eq T c _ hc]
+  have hβ1 : 1 / (4 * T - 12) * t < 1 := by
+    have : 0 ≤ 1 / (lineA c T * c ^ 2) * t := by positivity
+    linarith
+  have h1 := integrable_exp_shift_mul_gauss ht hβ1 σ
+    ((alpha ((T : ℂ) * I)).re - Real.log c + Real.log 2 / 2)
+  have h2 := integrable_exp_shift_mul_gauss ht hβ σ ((alpha ((T : ℂ) * I)).re - Real.log c)
+  have e : ∀ v : ℝ, Real.exp (1 / (6 * (T - 0.8))) * (Real.sqrt 2 * Real.sqrt (π / lineA c T)) *
+      (Real.exp (lineB c T ^ 2 / (4 * lineA c T)) *
+        Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c + Real.log 2 / 2) *
+          (σ + Real.sqrt t * v) + 1 / (4 * T - 12) * (σ + Real.sqrt t * v) ^ 2) +
+      2 / Real.sqrt 3 * Real.exp (lineB c T ^ 2 / (3 * lineA c T)) *
+        Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c) * (σ + Real.sqrt t * v) +
+          (1 / (4 * T - 12) + 1 / (lineA c T * c ^ 2)) * (σ + Real.sqrt t * v) ^ 2)) * gauss v =
+      Real.exp (1 / (6 * (T - 0.8))) * (Real.sqrt 2 * Real.sqrt (π / lineA c T)) *
+      (Real.exp (lineB c T ^ 2 / (4 * lineA c T)) *
+        (Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c + Real.log 2 / 2) *
+          (σ + Real.sqrt t * v) + 1 / (4 * T - 12) * (σ + Real.sqrt t * v) ^ 2) * gauss v) +
+      2 / Real.sqrt 3 * Real.exp (lineB c T ^ 2 / (3 * lineA c T)) *
+        (Real.exp (((alpha ((T : ℂ) * I)).re - Real.log c) * (σ + Real.sqrt t * v) +
+          (1 / (4 * T - 12) + 1 / (lineA c T * c ^ 2)) * (σ + Real.sqrt t * v) ^ 2) * gauss v)) :=
+    fun v => by ring
+  simp_rw [e]
+  rw [integral_const_mul, integral_add (h1.const_mul _) (h2.const_mul _), integral_const_mul,
+    integral_const_mul, integral_exp_shift_mul_gauss ht hβ1, integral_exp_shift_mul_gauss ht hβ]
+  rfl
+
 end DeBruijnNewman

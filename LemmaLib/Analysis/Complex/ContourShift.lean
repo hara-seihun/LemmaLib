@@ -48,16 +48,19 @@ open Complex Real Set Filter Topology MeasureTheory intervalIntegral
 namespace Complex
 
 /-- Shifting the contour of an integral over `ℝ` to the horizontal line `Im = β`, for a function
-holomorphic on the closed strip between the two lines with Gaussian decay there. -/
-theorem integral_add_ofReal_mul_I_eq_integral {F : ℂ → ℂ} {β a C : ℝ} (ha : 0 < a)
-    (hF : ∀ v : ℂ, v.im ∈ uIcc 0 β → DifferentiableAt ℂ F v)
+continuous on the closed strip between the two lines, holomorphic there off a countable set, and
+with Gaussian decay on the strip. -/
+theorem integral_add_ofReal_mul_I_eq_integral_off_countable {F : ℂ → ℂ} {β a C : ℝ} {S : Set ℂ}
+    (ha : 0 < a) (hS : S.Countable)
+    (hFc : ∀ v : ℂ, v.im ∈ uIcc 0 β → ContinuousAt F v)
+    (hF : ∀ v : ℂ, v.im ∈ uIcc 0 β → v ∉ S → DifferentiableAt ℂ F v)
     (hbound : ∀ v : ℂ, v.im ∈ uIcc 0 β → ‖F v‖ ≤ C * Real.exp (-a * v.re ^ 2)) :
     ∫ x : ℝ, F (x + β * I) = ∫ x : ℝ, F x := by
   -- continuity and integrability along horizontal lines of the strip
   have hcont : ∀ y ∈ uIcc 0 β, Continuous fun x : ℝ => F (x + y * I) := by
     intro y hy
     refine continuous_iff_continuousAt.2 fun x => ?_
-    have h1 : ContinuousAt F (x + y * I) := (hF _ (by simpa using hy)).continuousAt
+    have h1 : ContinuousAt F (x + y * I) := hFc _ (by simpa using hy)
     exact h1.comp (f := fun x : ℝ => (x : ℂ) + y * I) (by fun_prop)
   have hint : ∀ y ∈ uIcc 0 β, Integrable fun x : ℝ => F (x + y * I) := by
     intro y hy
@@ -71,11 +74,20 @@ theorem integral_add_ofReal_mul_I_eq_integral {F : ℂ → ℂ} {β a C : ℝ} (
     ∫ y in (0 : ℝ)..β, F (-T + y * I)) with hV
   have hC : ∀ T : ℝ, ∫ x in -T..T, F (x + β * I) = (∫ x in -T..T, F x) + V T := by
     intro T
-    have := integral_boundary_rect_eq_zero_of_differentiableOn F (-T) (T + β * I) (by
-      intro v hv
-      refine (hF v ?_).differentiableWithinAt
-      rw [mem_reProdIm] at hv
-      simpa using hv.2)
+    have := integral_boundary_rect_eq_zero_of_differentiable_on_off_countable F (-T) (T + β * I)
+      S hS (by
+        intro v hv
+        refine (hFc v ?_).continuousWithinAt
+        rw [mem_reProdIm] at hv
+        simpa using hv.2) (by
+        intro v hv
+        rw [mem_diff, mem_reProdIm] at hv
+        refine hF v ?_ hv.2
+        have := hv.1.2
+        simp only [neg_im, ofReal_im, neg_zero, add_im, mul_im, I_re, mul_zero, I_im, mul_one,
+          zero_add, ofReal_re] at this
+        rw [add_zero] at this
+        exact Ioo_subset_Icc_self this)
     simp only [neg_re, ofReal_re, add_re, mul_re, I_re, mul_zero, ofReal_im, I_im, mul_one,
       sub_self, add_zero, neg_im, neg_zero, add_im, mul_im, zero_add, ofReal_zero, zero_mul,
       smul_eq_mul] at this
@@ -119,6 +131,15 @@ theorem integral_add_ofReal_mul_I_eq_integral {F : ℂ → ℂ} {β a C : ℝ} (
   rw [add_zero] at this
   refine this.congr fun T => ?_
   exact (hC T).symm
+
+/-- Shifting the contour of an integral over `ℝ` to the horizontal line `Im = β`, for a function
+holomorphic on the closed strip between the two lines with Gaussian decay there. -/
+theorem integral_add_ofReal_mul_I_eq_integral {F : ℂ → ℂ} {β a C : ℝ} (ha : 0 < a)
+    (hF : ∀ v : ℂ, v.im ∈ uIcc 0 β → DifferentiableAt ℂ F v)
+    (hbound : ∀ v : ℂ, v.im ∈ uIcc 0 β → ‖F v‖ ≤ C * Real.exp (-a * v.re ^ 2)) :
+    ∫ x : ℝ, F (x + β * I) = ∫ x : ℝ, F x :=
+  integral_add_ofReal_mul_I_eq_integral_off_countable (S := ∅) ha countable_empty
+    (fun v hv => (hF v hv).continuousAt) (fun v hv _ => hF v hv) hbound
 
 /-- Shifting the contour of an integral over `ℝ` by a complex constant `c`. -/
 theorem integral_add_eq_integral {F : ℂ → ℂ} {c : ℂ} {a C : ℝ} (ha : 0 < a)

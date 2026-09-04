@@ -11,14 +11,14 @@ public import LemmaLib.Analysis.Complex.ContourShift
 /-!
 # The reflected Riemann–Siegel integral as a Gaussian integral
 
-For `Re s > 2` and `0 < c < 1`, the complex conjugate of the Riemann–Siegel integral at `1 - s̄`
+For `Re s > 2` and `0 < c < 1`, the complex conjugate of the Riemann–Siegel integral at `1 - conj s`
 is a multiple of the Gaussian integral `I₀(s)` of `LemmaLib.NumberTheory.RiemannSiegel.Mellin`:
-`conj (R(1 - s̄, c)) = e^{-iπs/4} (1 + e^{iπs}) I₀(s)` (`RiemannSiegel.conj_rsIntegral_one_sub`).
+`conj (R(1 - conj s, c)) = e^{-iπs/4} (1 + e^{iπs}) I₀(s)` (`RiemannSiegel.conj_rsIntegral_one_sub`).
 
-Conjugation turns the contour `c - ωx` into `c - ω̄x`, and the integrand into
+Conjugation turns the contour `c - ωx` into `c - conj ωx`, and the integrand into
 `u^{s-1} e^{-iπu²} / (e^{iπu} - e^{-iπu})` (`foldIntegrand`). For `Re s > 2` this integrand
 extends continuously by `0` to the origin, so the contour can be moved to the parallel line through
-`0`; it then folds into the two rays `ω̄ (0, ∞)` and `-ω̄ (0, ∞)`, on each of which the integrand
+`0`; it then folds into the two rays `conj ω (0, ∞)` and `-conj ω (0, ∞)`, on each of which the integrand
 is a multiple of the integrand of `I₀(s)`.
 -/
 
@@ -71,7 +71,7 @@ theorem conj_line_eq (c x : ℝ) :
     (c : ℂ) - ω * x = (starRingEnd ℂ) ((c : ℂ) - (starRingEnd ℂ) ω * x) := by
   simp [map_sub, map_mul, Complex.conj_ofReal]
 
-/-- `conj (R(1 - s̄, c)) = ∫ ω̄ foldIntegrand s (c - ω̄ x) dx`. -/
+/-- `conj (R(1 - conj s, c)) = ∫ conj ω foldIntegrand s (c - conj ω x) dx`. -/
 theorem conj_rsIntegral_one_sub_eq_integral (s : ℂ) {c : ℝ} (hc0 : 0 < c) :
     (starRingEnd ℂ) (rsIntegral (1 - (starRingEnd ℂ) s) c) =
       ∫ x : ℝ, (starRingEnd ℂ) ω * foldIntegrand s ((c : ℂ) - (starRingEnd ℂ) ω * x) := by
@@ -82,7 +82,7 @@ theorem conj_rsIntegral_one_sub_eq_integral (s : ℂ) {c : ℝ} (hc0 : 0 < c) :
   rw [map_mul, map_neg, conj_line_eq, conj_integrand_conj (arg_line_conj_ne_pi hc0 x)]
   ring
 
-/-- The line `c - ω̄ x` is `ω̄ ((β - x) + β i)` with `β = c √2 / 2`. -/
+/-- The line `c - conj ω x` is `conj ω ((β - x) + β i)` with `β = c √2 / 2`. -/
 theorem line_conj_eq_conj_rsOmega_mul (c x : ℝ) :
     (c : ℂ) - (starRingEnd ℂ) ω * x =
       (starRingEnd ℂ) ω * (((c * (Real.sqrt 2 / 2) - x : ℝ) : ℂ) + (c * (Real.sqrt 2 / 2) : ℝ) * I) := by
@@ -93,7 +93,7 @@ theorem line_conj_eq_conj_rsOmega_mul (c x : ℝ) :
   · simp [rsOmega_re, rsOmega_im]
     nlinarith
 
-/-- `conj (R(1 - s̄, c)) = ω̄ ∫ F (x + β i) dx` with `F v = foldIntegrand s (ω̄ v)`, `β = c √2 / 2`. -/
+/-- `conj (R(1 - conj s, c)) = conj ω ∫ F (x + β i) dx` with `F v = foldIntegrand s (conj ω v)`, `β = c √2 / 2`. -/
 theorem conj_rsIntegral_one_sub_eq_integral_line (s : ℂ) {c : ℝ} (hc0 : 0 < c) :
     (starRingEnd ℂ) (rsIntegral (1 - (starRingEnd ℂ) s) c) =
       (starRingEnd ℂ) ω * ∫ x : ℝ,
@@ -489,7 +489,7 @@ theorem neg_conj_rsOmega_ne_zero : -(starRingEnd ℂ) ω ≠ 0 := by
 theorem conj_rsOmega_ne_zero : (starRingEnd ℂ) ω ≠ 0 := by
   rw [map_ne_zero]; exact rsOmega_ne_zero
 
-/-- On the ray `ω̄ x`, `x > 0`, the reflected integrand is `ω̄^{s-1}` times the Gaussian
+/-- On the ray `conj ω x`, `x > 0`, the reflected integrand is `conj ω^{s-1}` times the Gaussian
 integrand. -/
 theorem foldIntegrand_conj_rsOmega_mul_ofReal (s : ℂ) {x : ℝ} (hx : 0 < x) :
     foldIntegrand s ((starRingEnd ℂ) ω * x) =
@@ -509,7 +509,7 @@ theorem foldIntegrand_conj_rsOmega_mul_ofReal (s : ℂ) {x : ℝ} (hx : 0 < x) :
       I_mul_conj_rsOmega]
   rw [e1, e2]
 
-/-- On the ray `-ω̄ x`, `x > 0`, the reflected integrand is `-(-ω̄)^{s-1}` times the Gaussian
+/-- On the ray `-conj ω x`, `x > 0`, the reflected integrand is `-(-conj ω)^{s-1}` times the Gaussian
 integrand. -/
 theorem foldIntegrand_conj_rsOmega_mul_neg_ofReal (s : ℂ) {x : ℝ} (hx : 0 < x) :
     foldIntegrand s ((starRingEnd ℂ) ω * (-x : ℝ)) =
@@ -580,7 +580,7 @@ theorem integral_foldIntegrand_conj_rsOmega_mul {s : ℂ} (hs : 2 < s.re) :
   ring
 
 /-- **The reflected Riemann–Siegel integral is a Gaussian integral.** For `Re s > 2` and
-`0 < c < 1`, `conj (R(1 - s̄, c)) = e^{-iπs/4} (1 + e^{iπs}) I₀(s)`. -/
+`0 < c < 1`, `conj (R(1 - conj s, c)) = e^{-iπs/4} (1 + e^{iπs}) I₀(s)`. -/
 theorem conj_rsIntegral_one_sub {s : ℂ} (hs : 2 < s.re) {c : ℝ} (hc0 : 0 < c) (hc1 : c < 1) :
     (starRingEnd ℂ) (rsIntegral (1 - (starRingEnd ℂ) s) c) =
       cexp (-(π * I * s / 4)) * (1 + cexp (π * I * s)) * gaussIntegral s := by

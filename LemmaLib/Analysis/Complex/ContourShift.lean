@@ -81,7 +81,7 @@ theorem integral_add_ofReal_mul_I_eq_integral_off_countable {F : ℂ → ℂ} {�
         rw [mem_reProdIm] at hv
         simpa using hv.2) (by
         intro v hv
-        rw [mem_diff, mem_reProdIm] at hv
+        rw [Set.mem_sdiff, mem_reProdIm] at hv
         refine hF v ?_ hv.2
         have := hv.1.2
         simp only [neg_im, ofReal_im, neg_zero, add_im, mul_im, I_re, mul_zero, I_im, mul_one,

@@ -21,7 +21,7 @@ with `Λ` the completed zeta function and
 (`RiemannSiegel.remainder N s`).
 
 For `Re s > 2` the formula is the sum of the Mellin form `R(s) = ζ(s) - ω^s (2π)^s / Γ(s) · I₀(s)`
-(`rsIntegral_eq_zeta_sub`) and the fold `conj (R(1 - s̄)) = e^{-iπs/4} (1 + e^{iπs}) I₀(s)`
+(`rsIntegral_eq_zeta_sub`) and the fold `conj (R(1 - conj s)) = e^{-iπs/4} (1 + e^{iπs}) I₀(s)`
 (`conj_rsIntegral_one_sub`), with the reflection formula for `Γ_ℝ` matching the two coefficients
 of `I₀(s)`. Both sides are analytic off the integers, so the identity theorem extends it.
 

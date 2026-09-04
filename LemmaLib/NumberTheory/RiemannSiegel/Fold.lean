@@ -237,4 +237,210 @@ theorem norm_foldIntegrand_conj_rsOmega_mul_le {s : ℂ} (hs : 2 ≤ s.re) {c : 
         rw [Real.rpow_sub hn s.re 2, Real.rpow_sub hn s.re 1, Real.rpow_one, Real.rpow_two]
         field_simp
 
+theorem rpow_le_exp_mul {t K : ℝ} (ht : 0 ≤ t) (hK : 0 ≤ K) : t ^ K ≤ Real.exp (K * t) := by
+  calc t ^ K ≤ Real.exp t ^ K := by
+        gcongr
+        linarith [Real.add_one_le_exp t]
+    _ = Real.exp (K * t) := by rw [mul_comm, Real.exp_mul]
+
+/-- The Gaussian bound on the strip `0 ≤ Im v ≤ c √2 / 2` for the contour shift. -/
+theorem exists_norm_foldIntegrand_le_gaussian {s : ℂ} (hs : 2 ≤ s.re) {c : ℝ} (hc0 : 0 < c)
+    (hc1 : c < 1) :
+    ∃ C : ℝ, ∀ v : ℂ, v.im ∈ uIcc 0 (c * (Real.sqrt 2 / 2)) →
+      ‖foldIntegrand s ((starRingEnd ℂ) ω * v)‖ ≤ C * Real.exp (-(π / 2) * v.re ^ 2) := by
+  have hc' : 0 < 1 - c := by linarith
+  set β := c * (Real.sqrt 2 / 2) with hβ
+  have hβ0 : 0 ≤ β := by positivity
+  have hβ1 : β ≤ 1 := by
+    have : Real.sqrt 2 ≤ 2 := by
+      rw [Real.sqrt_le_left (by norm_num)]; norm_num
+    nlinarith
+  obtain ⟨K, hK⟩ : ∃ K : ℝ, K = s.re - 1 := ⟨_, rfl⟩
+  have hK0 : 0 ≤ K := by rw [hK]; linarith
+  obtain ⟨D, hD⟩ : ∃ D : ℝ, D = 1 / 4 + Real.sqrt 2 / (4 * (1 - c)) := ⟨_, rfl⟩
+  have hD0 : 0 ≤ D := by rw [hD]; positivity
+  refine ⟨Real.exp (π * |s.im|) * Real.exp π * D * Real.exp (K + K ^ 2 / (2 * π)), ?_⟩
+  intro v hv
+  rw [uIcc_of_le hβ0] at hv
+  have h := norm_foldIntegrand_conj_rsOmega_mul_le hs hc1 hv
+  refine h.trans ?_
+  have hx1 : 1 ≤ |v.re| + 1 := by linarith [abs_nonneg v.re]
+  have hnorm : ‖v‖ ≤ |v.re| + 1 := by
+    refine (Complex.norm_le_abs_re_add_abs_im v).trans ?_
+    have := hv.2
+    rw [abs_of_nonneg hv.1]
+    linarith
+  have hpow1 : ‖v‖ ^ (s.re - 2) ≤ Real.exp (K * (|v.re| + 1)) := by
+    calc ‖v‖ ^ (s.re - 2) ≤ (|v.re| + 1) ^ (s.re - 2) :=
+          Real.rpow_le_rpow (norm_nonneg _) hnorm (by linarith)
+      _ ≤ (|v.re| + 1) ^ K := Real.rpow_le_rpow_of_exponent_le hx1 (by rw [hK]; linarith)
+      _ ≤ Real.exp (K * (|v.re| + 1)) := rpow_le_exp_mul (by linarith) hK0
+  have hpow2 : ‖v‖ ^ (s.re - 1) ≤ Real.exp (K * (|v.re| + 1)) := by
+    calc ‖v‖ ^ (s.re - 1) ≤ (|v.re| + 1) ^ (s.re - 1) :=
+          Real.rpow_le_rpow (norm_nonneg _) hnorm (by linarith)
+      _ = (|v.re| + 1) ^ K := by rw [hK]
+      _ ≤ Real.exp (K * (|v.re| + 1)) := rpow_le_exp_mul (by linarith) hK0
+  have hexp : Real.exp (π * (v.im ^ 2 - v.re ^ 2)) ≤ Real.exp π * Real.exp (-π * v.re ^ 2) := by
+    rw [← Real.exp_add]
+    apply Real.exp_le_exp.2
+    have : v.im ^ 2 ≤ 1 := by nlinarith [hv.1, hv.2]
+    nlinarith [Real.pi_pos]
+  have hbr : ‖v‖ ^ (s.re - 2) / 4 + Real.sqrt 2 / (4 * (1 - c)) * ‖v‖ ^ (s.re - 1) ≤
+      D * Real.exp (K * (|v.re| + 1)) := by
+    rw [hD, add_mul]
+    gcongr
+    · linarith
+  have hsq : K * |v.re| - π * v.re ^ 2 ≤ K ^ 2 / (2 * π) - π / 2 * v.re ^ 2 := by
+    have := mul_abs_sub_le (2 * K) v.re
+    have hπ := Real.pi_pos
+    have e : (2 * K) ^ 2 / (4 * π) = 2 * (K ^ 2 / (2 * π)) := by field_simp; ring
+    rw [e] at this
+    linarith
+  calc Real.exp (π * |s.im|) * Real.exp (π * (v.im ^ 2 - v.re ^ 2)) *
+        (‖v‖ ^ (s.re - 2) / 4 + Real.sqrt 2 / (4 * (1 - c)) * ‖v‖ ^ (s.re - 1))
+      ≤ Real.exp (π * |s.im|) * (Real.exp π * Real.exp (-π * v.re ^ 2)) *
+        (D * Real.exp (K * (|v.re| + 1))) := by gcongr
+    _ = Real.exp (π * |s.im|) * Real.exp π * D *
+        Real.exp (K + (K * |v.re| - π * v.re ^ 2)) := by
+        rw [show K + (K * |v.re| - π * v.re ^ 2) = K * (|v.re| + 1) + -π * v.re ^ 2 by ring,
+          Real.exp_add]
+        ring
+    _ ≤ Real.exp (π * |s.im|) * Real.exp π * D *
+        Real.exp (K + (K ^ 2 / (2 * π) - π / 2 * v.re ^ 2)) := by
+        gcongr
+    _ = Real.exp (π * |s.im|) * Real.exp π * D * Real.exp (K + K ^ 2 / (2 * π)) *
+        Real.exp (-(π / 2) * v.re ^ 2) := by
+        rw [show K + (K ^ 2 / (2 * π) - π / 2 * v.re ^ 2) =
+          (K + K ^ 2 / (2 * π)) + -(π / 2) * v.re ^ 2 by ring, Real.exp_add]
+        ring
+
+/-! ### Continuity at the origin and differentiability off it -/
+
+/-- For `Re s > 2` the reflected integrand is continuous at `0` (with value `0`). -/
+theorem continuousAt_foldIntegrand_conj_rsOmega_mul_zero {s : ℂ} (hs : 2 < s.re) :
+    ContinuousAt (fun v : ℂ => foldIntegrand s ((starRingEnd ℂ) ω * v)) 0 := by
+  have hs1 : s ≠ 1 := fun h => by rw [h] at hs; norm_num at hs
+  set C := Real.exp (π * |s.im|) * Real.exp (π / 4) / 4 with hC
+  have hC0 : 0 ≤ C := by positivity
+  rw [ContinuousAt, mul_zero, foldIntegrand_zero hs1, tendsto_zero_iff_norm_tendsto_zero]
+  have hlim : Tendsto (fun v : ℂ => C * ‖v‖ ^ (s.re - 2)) (𝓝 0) (𝓝 0) := by
+    have h1 : Tendsto (fun v : ℂ => ‖v‖ ^ (s.re - 2)) (𝓝 0) (𝓝 ((0 : ℝ) ^ (s.re - 2))) := by
+      have := (Real.continuousAt_rpow_const 0 (s.re - 2) (Or.inr (by linarith))).tendsto
+      refine this.comp ?_
+      simpa using continuous_norm.tendsto (0 : ℂ)
+    rw [Real.zero_rpow (by linarith)] at h1
+    simpa using h1.const_mul C
+  refine squeeze_zero' (Eventually.of_forall fun _ => norm_nonneg _) ?_ hlim
+  filter_upwards [Metric.closedBall_mem_nhds (0 : ℂ) (by norm_num : (0 : ℝ) < 1 / 2)] with v hv
+  rw [Metric.mem_closedBall, dist_zero_right] at hv
+  rcases eq_or_ne v 0 with rfl | hv0
+  · rw [mul_zero, foldIntegrand_zero hs1, norm_zero]
+    positivity
+  have hn : 0 < ‖v‖ := norm_pos_iff.2 hv0
+  unfold foldIntegrand
+  rw [norm_mul, div_eq_mul_inv, norm_mul, norm_exp_neg_pi_I_mul_sq,
+    show 2 * π * ((starRingEnd ℂ) ω * v).re * ((starRingEnd ℂ) ω * v).im =
+      π * (2 * ((starRingEnd ℂ) ω * v).re * ((starRingEnd ℂ) ω * v).im) by ring,
+    two_mul_re_mul_im_conj_rsOmega_mul]
+  have h1 := norm_cpow_sub_one_le ((starRingEnd ℂ) ω * v) s
+  rw [norm_mul, norm_conj_rsOmega, one_mul] at h1
+  have h3 := norm_inv_exp_sub_exp_neg_le_of_norm_le
+    (u := (starRingEnd ℂ) ω * v) (by rw [norm_mul, norm_conj_rsOmega, one_mul]; exact hv)
+  rw [norm_mul, norm_conj_rsOmega, one_mul] at h3
+  have hexp : Real.exp (π * (v.im ^ 2 - v.re ^ 2)) ≤ Real.exp (π / 4) := by
+    apply Real.exp_le_exp.2
+    have h4 : v.im ^ 2 ≤ ‖v‖ ^ 2 := by
+      have := Complex.abs_im_le_norm v
+      nlinarith [abs_nonneg v.im, sq_abs v.im]
+    have h5 : ‖v‖ ^ 2 ≤ 1 / 4 := by nlinarith
+    nlinarith [Real.pi_pos, sq_nonneg v.re]
+  calc ‖((starRingEnd ℂ) ω * v) ^ (s - 1)‖ * (Real.exp (π * (v.im ^ 2 - v.re ^ 2)) *
+        ‖(cexp (π * I * ((starRingEnd ℂ) ω * v)) - cexp (-(π * I * ((starRingEnd ℂ) ω * v))))⁻¹‖)
+      ≤ ‖v‖ ^ (s.re - 1) * Real.exp (π * |s.im|) * (Real.exp (π / 4) * (1 / (4 * ‖v‖))) := by
+        gcongr
+    _ = C * ‖v‖ ^ (s.re - 2) := by
+        rw [hC, Real.rpow_sub hn s.re 2, Real.rpow_sub hn s.re 1, Real.rpow_one, Real.rpow_two]
+        field_simp
+
+theorem sin_pi_mul_ne_zero_of_fold_strip {u : ℂ} {c : ℝ} (hc1 : c < 1)
+    (hu : u.re + u.im ∈ Icc 0 c) (hu0 : u ≠ 0) : Complex.sin (π * u) ≠ 0 := by
+  rw [Ne, Complex.sin_eq_zero_iff, not_exists]
+  intro k hk
+  have hπ : (π : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
+  have hu' : u = k := by
+    rw [mul_comm] at hk
+    exact mul_right_cancel₀ hπ hk
+  subst hu'
+  simp only [Complex.intCast_re, Complex.intCast_im, add_zero, mem_Icc] at hu
+  have hk0 : k ≠ 0 := by
+    intro h; apply hu0; rw [h]; simp
+  have hk1 : (1 : ℝ) ≤ k := by
+    have : (0 : ℝ) ≤ k := hu.1
+    have : 0 ≤ k := by exact_mod_cast this
+    have : 1 ≤ k := lt_of_le_of_ne this (Ne.symm hk0)
+    exact_mod_cast this
+  linarith [hu.2]
+
+theorem mem_slitPlane_of_fold_strip {u : ℂ} (hu : 0 ≤ u.re + u.im) (hu0 : u ≠ 0) :
+    u ∈ slitPlane := by
+  rw [Complex.mem_slitPlane_iff]
+  by_cases h : u.im = 0
+  · left
+    rw [h, add_zero] at hu
+    rcases hu.lt_or_eq with h' | h'
+    · exact h'
+    · exfalso
+      apply hu0
+      apply Complex.ext
+      · simp [← h']
+      · simp [h]
+  · right; exact h
+
+theorem differentiableAt_foldIntegrand {s u : ℂ} (hu : u ∈ slitPlane)
+    (hsin : Complex.sin (π * u) ≠ 0) : DifferentiableAt ℂ (foldIntegrand s) u := by
+  unfold foldIntegrand
+  refine ((differentiableAt_id (𝕜 := ℂ)).cpow_const hu).mul
+    (DifferentiableAt.div (by fun_prop) (by fun_prop) ?_)
+  rw [exp_sub_exp_neg_eq_two_I_sin]
+  exact mul_ne_zero (mul_ne_zero two_ne_zero I_ne_zero) hsin
+
+theorem differentiableAt_foldIntegrand_conj_rsOmega_mul {s : ℂ} {c : ℝ} (hc1 : c < 1) {v : ℂ}
+    (hv : v.im ∈ Icc 0 (c * (Real.sqrt 2 / 2))) (hv0 : v ≠ 0) :
+    DifferentiableAt ℂ (fun v : ℂ => foldIntegrand s ((starRingEnd ℂ) ω * v)) v := by
+  have hu0 : (starRingEnd ℂ) ω * v ≠ 0 := by
+    refine mul_ne_zero ?_ hv0
+    rw [map_ne_zero]; exact rsOmega_ne_zero
+  have hstrip : ((starRingEnd ℂ) ω * v).re + ((starRingEnd ℂ) ω * v).im ∈ Icc 0 c := by
+    rw [re_add_im_conj_rsOmega_mul]
+    have h2 : Real.sqrt 2 * Real.sqrt 2 = 2 := Real.mul_self_sqrt (by norm_num)
+    constructor
+    · have := hv.1; positivity
+    · have := hv.2
+      have hs2 : 0 < Real.sqrt 2 := by positivity
+      nlinarith
+  exact (differentiableAt_foldIntegrand (mem_slitPlane_of_fold_strip hstrip.1 hu0)
+    (sin_pi_mul_ne_zero_of_fold_strip hc1 hstrip hu0)).comp v
+    ((differentiableAt_id (𝕜 := ℂ)).const_mul _)
+
+/-! ### Moving the contour to the line through the origin -/
+
+theorem integral_foldIntegrand_line_eq_integral {s : ℂ} (hs : 2 < s.re) {c : ℝ} (hc0 : 0 < c)
+    (hc1 : c < 1) :
+    ∫ x : ℝ, foldIntegrand s ((starRingEnd ℂ) ω * (x + (c * (Real.sqrt 2 / 2) : ℝ) * I)) =
+      ∫ x : ℝ, foldIntegrand s ((starRingEnd ℂ) ω * x) := by
+  obtain ⟨C, hC⟩ := exists_norm_foldIntegrand_le_gaussian hs.le hc0 hc1
+  have hβ : 0 ≤ c * (Real.sqrt 2 / 2) := by positivity
+  refine Complex.integral_add_ofReal_mul_I_eq_integral_off_countable (S := {0})
+    (F := fun v => foldIntegrand s ((starRingEnd ℂ) ω * v)) (by positivity : (0 : ℝ) < π / 2)
+    (countable_singleton 0) ?_ ?_ hC
+  · intro v hv
+    rcases eq_or_ne v 0 with rfl | hv0
+    · exact continuousAt_foldIntegrand_conj_rsOmega_mul_zero hs
+    · rw [uIcc_of_le hβ] at hv
+      exact (differentiableAt_foldIntegrand_conj_rsOmega_mul hc1 hv hv0).continuousAt
+  · intro v hv hvS
+    rw [mem_singleton_iff] at hvS
+    rw [uIcc_of_le hβ] at hv
+    exact differentiableAt_foldIntegrand_conj_rsOmega_mul hc1 hv hvS
+
 end RiemannSiegel

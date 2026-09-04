@@ -37,7 +37,7 @@ namespace DeBruijnNewman
 
 
 /-- The Gaussian weight `e^{-v²}/√π`. -/
-noncomputable def gauss (v : ℝ) : ℝ := Real.exp (-v ^ 2) / Real.sqrt π
+@[expose] noncomputable def gauss (v : ℝ) : ℝ := Real.exp (-v ^ 2) / Real.sqrt π
 
 @[fun_prop]
 lemma continuous_gauss : Continuous gauss := by unfold gauss; fun_prop

@@ -27,9 +27,10 @@ In the region `0 ≤ t ≤ 1/2`, `0 ≤ y ≤ 1`, `x ≥ 200` the theorem assert
 The statement is recorded as the proposition `EffectiveApproximation`. It is derived in
 `LemmaLib.NumberTheory.DeBruijnNewman.EffectiveApproximation` from the two Riemann–Siegel inputs
 `RtnEstimate` and `TailEstimate` of `LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel` (Polymath
-Propositions 6.1 and 6.3, whose proofs through Arias de Reyna's explicit remainder bounds and
-Boyd's effective Stirling approximation are not yet formalised). Everything the consumer needs on
-top of it is proved here: `B t` never vanishes on the region, so the nonvanishing test
+Propositions 6.1 and 6.3). `RtnEstimate` is proved in
+`LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate`; `TailEstimate`, whose proof goes through
+Arias de Reyna's explicit remainder bounds for the Riemann–Siegel expansion, is not yet
+formalised. Everything the consumer needs on top of it is proved here: `B t` never vanishes on the region, so the nonvanishing test
 `errAB + errC0 < ‖f‖ → H t (x + iy) ≠ 0` follows, and the explicit bounds on `‖gamma‖`, `Re sStar`
 and `‖kappa‖` hold unconditionally.
 -/

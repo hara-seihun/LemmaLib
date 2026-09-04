@@ -7,6 +7,7 @@ module
 
 public import LemmaLib.NumberTheory.DeBruijnNewman.AlphaBounds
 public import LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel
+public import LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate
 
 /-!
 # The effective approximation of `H t` from its Riemann–Siegel inputs
@@ -16,6 +17,9 @@ Riemann ξ function*, Res. Math. Sci. 6 (2019)) from the two analytic inputs `Rt
 `TailEstimate` of `LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel`:
 
 `effectiveApproximation_of : RtnEstimate → TailEstimate → EffectiveApproximation`.
+
+Since `RtnEstimate` is proved in `LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate`, the theorem
+reduces to `TailEstimate` alone (`effectiveApproximation_of_tail`).
 
 The proof follows Section 6 of Polymath. The error `e_A + e_B` of the main terms is bounded
 termwise by `errAB` (`termA_le`, `termB_le`, via the bound (6.12)–(6.13) on `ε_{t,n}` in
@@ -566,5 +570,9 @@ theorem effectiveApproximation_of (hR : RtnEstimate) (hT : TailEstimate) :
           ring
         rw [← Finset.mul_sum, ← Finset.mul_sum, ← hsum, Finset.sum_add_distrib]
         ring
+
+/-- Polymath Theorem 1.3, assuming only the Riemann–Siegel expansion `TailEstimate`. -/
+theorem effectiveApproximation_of_tail (hT : TailEstimate) : EffectiveApproximation :=
+  effectiveApproximation_of rtnEstimate hT
 
 end DeBruijnNewman

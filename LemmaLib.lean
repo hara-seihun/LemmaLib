@@ -11,6 +11,7 @@ public import LemmaLib.Algebra.Polynomial.Reflection
 public import LemmaLib.Analysis.Asymptotics.WeightedCesaro
 public import LemmaLib.Analysis.Calculus.Even
 public import LemmaLib.Analysis.Calculus.ZeroIsolation
+public import LemmaLib.Analysis.Complex.ContourShift
 public import LemmaLib.Analysis.EulerMaclaurin
 public import LemmaLib.Analysis.SpecialFunctions.Gamma.Stirling
 public import LemmaLib.Data.Nat.Choose.Two
@@ -29,6 +30,7 @@ public import LemmaLib.NumberTheory.DeBruijnNewman.EffectiveModel
 public import LemmaLib.NumberTheory.DeBruijnNewman.Heat
 public import LemmaLib.NumberTheory.DeBruijnNewman.Kernel
 public import LemmaLib.NumberTheory.DeBruijnNewman.RiemannSiegel
+public import LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate
 public import LemmaLib.NumberTheory.DeBruijnNewman.Theta
 public import LemmaLib.NumberTheory.DeBruijnNewman.Xi
 public import LemmaLib.Topology.MetricSpace.Sequences

@@ -29,5 +29,8 @@ can compile while hiding all its declarations when it uses Lean's explicit modul
 #check DeBruijnNewman.B_mul_f
 #check DeBruijnNewman.prefactor_log_le
 #check DeBruijnNewman.effectiveApproximation_of
+#check DeBruijnNewman.rtnEstimate
+#check DeBruijnNewman.effectiveApproximation_of_tail
+#check Complex.integral_add_eq_integral
 #check EulerMaclaurin.sum_eq_integral_add
 #check Complex.Stirling.exists_Gamma_eq_sqrt_two_pi_mul_exp

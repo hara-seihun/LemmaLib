@@ -13,8 +13,9 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 # The Riemann–Siegel input of the effective model
 
 This file records the two analytic inputs of Polymath Theorem 1.3 (*Effective approximation of
-heat flow evolution of the Riemann ξ function*, Res. Math. Sci. 6 (2019)) that are not yet
-formalised, and the algebra that connects them to the model `B t * f t x y`.
+heat flow evolution of the Riemann ξ function*, Res. Math. Sci. 6 (2019)) as propositions, and
+the algebra that connects them to the model `B t * f t x y`. `RtnEstimate` is proved in
+`LemmaLib.NumberTheory.DeBruijnNewman.RtnEstimate`; `TailEstimate` is not yet formalised.
 
 * `r₀ n s` is the `n`-th term `(1/8) (s(s-1)/2) π^{-s/2} Γ(s/2) n^{-s}` of the Riemann–Siegel
   expansion of `ξ(s)/8`, and `r t n s` is its heat flow (Polymath (5.2)).

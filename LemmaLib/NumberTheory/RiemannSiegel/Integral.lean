@@ -53,6 +53,11 @@ line `u = c - ω x` through the real point `c`. -/
 @[expose] noncomputable def rsIntegral (s : ℂ) (c : ℝ) : ℂ :=
   ∫ x : ℝ, -ω * integrand s (c - ω * x)
 
+theorem integrand_eq_gauss_mul (s u : ℂ) :
+    integrand s u = u ^ (-s) * cexp (π * I * u ^ 2) *
+      (cexp (π * I * u) - cexp (-(π * I * u)))⁻¹ := by
+  unfold integrand kernel; ring
+
 /-! ### Elementary bounds -/
 
 theorem abs_re_sub_im_le_sqrt_two_mul_norm (u : ℂ) : |u.re - u.im| ≤ Real.sqrt 2 * ‖u‖ := by
@@ -66,14 +71,14 @@ theorem norm_le_abs_re_sub_im_add (u : ℂ) : ‖u‖ ≤ |u.re - u.im| + 2 * |u
   have := abs_sub_abs_le_abs_sub u.re u.im
   linarith [abs_sub (u.re) (u.im)]
 
-theorem norm_cpow_neg_le {u : ℂ} (hu : u ≠ 0) (s : ℂ) :
-    ‖u ^ (-s)‖ ≤ ‖u‖ ^ (-s.re) * Real.exp (π * |s.im|) := by
-  rw [Complex.norm_cpow_of_ne_zero hu, neg_re, neg_im, div_eq_mul_inv, ← Real.exp_neg]
+theorem norm_cpow_le_exp_pi (u w : ℂ) :
+    ‖u ^ w‖ ≤ ‖u‖ ^ w.re * Real.exp (π * |w.im|) := by
+  refine (Complex.norm_cpow_le u w).trans ?_
+  rw [div_eq_mul_inv, ← Real.exp_neg]
   gcongr
-  calc -(arg u * -s.im) = arg u * s.im := by ring
-    _ ≤ |arg u * s.im| := le_abs_self _
-    _ = |arg u| * |s.im| := abs_mul _ _
-    _ ≤ π * |s.im| := by gcongr; exact Complex.abs_arg_le_pi u
+  calc -(arg u * w.im) ≤ |arg u * w.im| := neg_le_abs _
+    _ = |arg u| * |w.im| := abs_mul _ _
+    _ ≤ π * |w.im| := by gcongr; exact Complex.abs_arg_le_pi u
 
 theorem abs_log_le_add_inv {y : ℝ} (hy : 0 < y) : |Real.log y| ≤ y + 1 / y := by
   have h1 : 0 < 1 / y := by positivity
@@ -115,8 +120,6 @@ theorem mul_abs_sub_le (M y : ℝ) : M * |y| - 2 * π * y ^ 2 ≤ M ^ 2 / (4 * �
 `c ≤ Re u - Im u ≤ c'`, for `|Re s| ≤ σ₀` and `|Im s| ≤ θ₀`. -/
 @[expose] noncomputable def gaussConst (σ₀ θ₀ c c' : ℝ) : ℝ :=
   Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + (2 * σ₀ + 2 * π * c') ^ 2 / (4 * π))
-
-theorem gaussConst_pos (σ₀ θ₀ c c' : ℝ) : 0 < gaussConst σ₀ θ₀ c c' := Real.exp_pos _
 
 /-- The constant of the Gaussian bound `norm_integrand_le` on the strip `c ≤ Re u - Im u ≤ c'`,
 for `|Re s| ≤ σ₀`, `|Im s| ≤ θ₀` and lines at distance `≥ ρ` from the integers. -/
@@ -181,7 +184,9 @@ theorem norm_cpow_mul_exp_le {s u : ℂ} {σ₀ θ₀ c c' : ℝ} (hσ₀ : |s.r
   have hσ₀0 : 0 ≤ σ₀ := (abs_nonneg _).trans hσ₀
   have hpow : ‖u ^ (-s)‖ ≤
       Real.exp (π * θ₀ + σ₀ * (c' + Real.sqrt 2 / c) + 2 * σ₀ * |y|) := by
-    refine (norm_cpow_neg_le hu0 s).trans ?_
+    have h := norm_cpow_le_exp_pi u (-s)
+    rw [neg_re, neg_im, abs_neg] at h
+    refine h.trans ?_
     calc ‖u‖ ^ (-s.re) * Real.exp (π * |s.im|)
         ≤ Real.exp (|s.re| * (‖u‖ + 1 / ‖u‖)) * Real.exp (π * |s.im|) :=
           mul_le_mul_of_nonneg_right (rpow_neg_le_exp hnorm0) (Real.exp_pos _).le
@@ -243,13 +248,10 @@ theorem norm_integrand_le {s u : ℂ} {σ₀ θ₀ c c' ρ : ℝ} (hσ₀ : |s.r
     ‖integrand s u‖ ≤ boundConst σ₀ θ₀ c c' ρ * Real.exp (-π * u.im ^ 2) := by
   have h1 := norm_cpow_mul_exp_le hσ₀ hθ₀ hc hu
   have h2 := norm_inv_exp_sub_exp_neg_le hρ (hstrip _ hu)
-  have e : integrand s u = u ^ (-s) * cexp (π * I * u ^ 2) *
-      (cexp (π * I * u) - cexp (-(π * I * u)))⁻¹ := by
-    unfold integrand kernel; ring
-  rw [e, norm_mul]
+  rw [integrand_eq_gauss_mul, norm_mul]
   calc ‖u ^ (-s) * cexp (π * I * u ^ 2)‖ * ‖(cexp (π * I * u) - cexp (-(π * I * u)))⁻¹‖
       ≤ gaussConst σ₀ θ₀ c c' * Real.exp (-π * u.im ^ 2) * (Real.sqrt 2 / (4 * ρ)) :=
-        mul_le_mul h1 h2 (norm_nonneg _) (by have := gaussConst_pos σ₀ θ₀ c c'; positivity)
+        mul_le_mul h1 h2 (norm_nonneg _) (mul_nonneg (Real.exp_pos _).le (Real.exp_pos _).le)
     _ = boundConst σ₀ θ₀ c c' ρ * Real.exp (-π * u.im ^ 2) := by unfold boundConst; ring
 
 /-! ### The lines `u = c - ω x` -/
@@ -422,16 +424,13 @@ theorem differentiable_rsIntegral {c : ℝ} (hc0 : 0 < c) (hc : ∀ n : ℤ, c �
 @[expose] noncomputable def poleNumerator (s : ℂ) (n : ℕ) (u : ℂ) : ℂ :=
   u ^ (-s) * cexp (π * I * u ^ 2) * ((-1) ^ n * mordellS (u - n))
 
-theorem sin_pi_mul_sub_nat (u : ℂ) (n : ℕ) :
-    Complex.sin (π * (u - n)) = (-1) ^ n * Complex.sin (π * u) := by
-  rw [mul_sub, mul_comm (π : ℂ) (n : ℂ)]
-  exact Complex.sin_antiperiodic.sub_nat_mul_eq n
-
 theorem integrand_eq_poleNumerator_div {s u : ℂ} (n : ℕ) (hu : Complex.sin (π * u) ≠ 0)
     (hun : u ≠ n) : integrand s u = poleNumerator s n u / (u - n) := by
+  have hsin : Complex.sin (π * (u - n)) = (-1) ^ n * Complex.sin (π * u) := by
+    rw [mul_sub, mul_comm (π : ℂ) (n : ℂ)]
+    exact Complex.sin_antiperiodic.sub_nat_mul_eq n
   unfold integrand kernel poleNumerator
-  rw [exp_sub_exp_neg_eq_two_I_sin, mordellS, sincPi_of_ne (sub_ne_zero.2 hun),
-    sin_pi_mul_sub_nat]
+  rw [exp_sub_exp_neg_eq_two_I_sin, mordellS, sincPi_of_ne (sub_ne_zero.2 hun), hsin]
   have h1 : ((-1 : ℂ) ^ n) ≠ 0 := pow_ne_zero _ (by norm_num)
   have h2 : u - n ≠ 0 := sub_ne_zero.2 hun
   have h3 : (I : ℂ) ≠ 0 := I_ne_zero
@@ -507,7 +506,7 @@ theorem exists_norm_poleNumerator_le (s : ℂ) {c c' : ℝ} {n : ℕ} (hc : 0 < 
   have hs2 : 0 < Real.sqrt 2 := by positivity
   have hρ0 : 0 < ρ := by positivity
   set G := gaussConst |s.re| |s.im| c c' with hG
-  have hG0 : 0 < G := gaussConst_pos _ _ _ _
+  have hG0 : 0 < G := Real.exp_pos _
   set A : ℝ := 1 / 4 + (c' + n) / (4 * ρ) with hA
   set B : ℝ := 2 / (4 * ρ) with hB
   have hc'0 : 0 < c' := hc.trans_le hcc'

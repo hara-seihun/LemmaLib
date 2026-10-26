@@ -39,15 +39,11 @@ namespace DeBruijnNewman
 /-- `ϑ x = ∑_{n ∈ ℤ} e^{-π n² x}` for `x > 0` (Mathlib's `evenKernel 0`). -/
 noncomputable abbrev theta (x : ℝ) : ℝ := HurwitzZeta.evenKernel 0 x
 
-lemma hasSum_theta {x : ℝ} (hx : 0 < x) :
-    HasSum (fun n : ℤ => Real.exp (-π * (n : ℝ) ^ 2 * x)) (theta x) := by
-  have := HurwitzZeta.hasSum_int_evenKernel (0 : ℝ) hx
-  simpa using this
-
 /-- The half-sum `∑_{m ≥ 1} e^{-π m² x} = (ϑ x - 1) / 2`. -/
 lemma hasSum_theta_nat {x : ℝ} (hx : 0 < x) :
     HasSum (fun n : ℕ => Real.exp (-(π * ((n : ℝ) + 1) ^ 2 * x))) ((theta x - 1) / 2) := by
-  have h := (hasSum_theta hx).nat_add_neg
+  have h := (show HasSum (fun n : ℤ => Real.exp (-π * (n : ℝ) ^ 2 * x)) (theta x) by
+    simpa using HurwitzZeta.hasSum_int_evenKernel (0 : ℝ) hx).nat_add_neg
   have h2 : HasSum (fun n : ℕ => 2 * Real.exp (-π * (n : ℝ) ^ 2 * x)) (theta x + 1) := by
     convert h using 1
     · ext n; push_cast; ring_nf
@@ -123,18 +119,15 @@ lemma theta_deriv_one : (W' 0 - W 0) / 2 = -(1 / 4) * theta 1 := by
   have := (hL.congr_of_eventuallyEq heq.symm).unique hR
   linarith
 
-lemma theta_one_eq : theta 1 = 1 + 2 * W 0 := by
-  have := theta_eq_W (zero_lt_one' ℝ)
-  simpa using this
-
-/-- The boundary value `W' 0 = -1/2`, equivalent to the derivative of the theta functional
-equation at `τ = i`. -/
+/-- The boundary value `W' 0 = -1/2`. It follows from the derivative of the theta functional
+equation at `1` (`theta_deriv_one`) and the value `theta 1 = 1 + 2 W 0`. -/
 theorem W'_zero : W' 0 = -(1 / 2) := by
   have h1 := theta_deriv_one
-  rw [theta_one_eq] at h1
+  have h2 : theta 1 = 1 + 2 * W 0 := by
+    have := theta_eq_W (zero_lt_one' ℝ)
+    simpa using this
+  rw [h2] at h1
   linarith
-
-
 
 lemma f_modif_of_one_lt {x : ℝ} (hx : 1 < x) :
     (hurwitzEvenFEPair 0).f_modif x = ((theta x - 1 : ℝ) : ℂ) := by

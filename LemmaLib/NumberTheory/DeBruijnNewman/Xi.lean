@@ -52,18 +52,8 @@ lemma norm_cos_le (w : ℂ) : ‖Complex.cos w‖ ≤ Real.exp |w.im| := by
   linarith
 
 lemma norm_sin_le (w : ℂ) : ‖Complex.sin w‖ ≤ Real.exp |w.im| := by
-  have h := Complex.two_sin w
-  have h1 : ‖Complex.exp (w * Complex.I)‖ = Real.exp (-w.im) := by
-    rw [Complex.norm_exp]; simp
-  have h2 : ‖Complex.exp (-w * Complex.I)‖ = Real.exp w.im := by
-    rw [Complex.norm_exp]; simp
-  have h3 : ‖2 * Complex.sin w‖ ≤ Real.exp w.im + Real.exp (-w.im) := by
-    rw [h, norm_mul, Complex.norm_I, mul_one]
-    exact (norm_sub_le _ _).trans (by rw [h1, h2])
-  rw [norm_mul, Complex.norm_two] at h3
-  have e1 : Real.exp (-w.im) ≤ Real.exp |w.im| := Real.exp_le_exp.mpr (neg_le_abs _)
-  have e2 : Real.exp w.im ≤ Real.exp |w.im| := Real.exp_le_exp.mpr (le_abs_self _)
-  linarith
+  rw [← Complex.cos_sub_pi_div_two]
+  simpa using norm_cos_le (w - π / 2)
 
 lemma norm_cos_mul_le' (z : ℂ) (u : ℝ) : ‖Complex.cos (z * u)‖ ≤ Real.exp (|z.im| * |u|) := by
   refine (norm_cos_le _).trans (le_of_eq ?_)

@@ -165,11 +165,6 @@ theorem im_alpha_ge {s : ℂ} (hs : 0 < s.im) : -(3 / (2 * s.im)) ≤ (alpha s).
   rw [this]
   exact add_le_add (add_le_add h1 h2) h3
 
-/-- `‖exp x - 1‖ ≤ exp ‖x‖ - 1`. -/
-theorem norm_exp_sub_one_le_exp_norm_sub_one (x : ℂ) : ‖Complex.exp x - 1‖ ≤ Real.exp ‖x‖ - 1 := by
-  have := Complex.norm_exp_sub_sum_le_exp_norm_sub_sum x 1
-  simpa using this
-
 /-- `mainTerm t n s = exp (log M₀(s) - s log n + (t/4) (α(s) - log n)²)`. -/
 theorem mainTerm_eq_exp (t : ℝ) {n : ℕ} (hn : 1 ≤ n) {s : ℂ} (hs : s.im ≠ 0) :
     mainTerm t n s =
@@ -632,7 +627,8 @@ theorem rtnEstimate : RtnEstimate := by
             norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hg]
       _ ≤ ‖mainTerm t n s‖ * ((Real.exp (κ * u ^ 2 + A) - 1) * gauss u) := by
           gcongr
-          refine (norm_exp_sub_one_le_exp_norm_sub_one δ).trans ?_
+          refine (show ‖Complex.exp δ - 1‖ ≤ Real.exp ‖δ‖ - 1 by
+            simpa using Complex.norm_exp_sub_sum_le_exp_norm_sub_sum δ 1).trans ?_
           gcongr
   -- integrability
   have hint1 : Integrable fun u : ℝ => Fc (u + c) := by
@@ -668,19 +664,19 @@ theorem rtnEstimate : RtnEstimate := by
     integrable_gauss.ofReal.const_mul _
   have hint3 : Integrable fun u : ℝ => Real.exp (κ * u ^ 2 + A) * gauss u :=
     integrable_exp_mul_gauss A hκ1
-  have hint4 : Integrable gauss := integrable_gauss
   -- assemble
   have hmain : ∫ u : ℝ, mainTerm t n s * (gauss u : ℂ) = mainTerm t n s := by
     rw [MeasureTheory.integral_const_mul, integral_complex_ofReal, integral_gauss]
     simp
   rw [hr, ← hmain, ← MeasureTheory.integral_sub hint1 hint2]
   refine (MeasureTheory.norm_integral_le_of_norm_le
-    ((hint3.sub hint4).const_mul ‖mainTerm t n s‖) (Eventually.of_forall fun u => ?_)).trans ?_
+    ((hint3.sub integrable_gauss).const_mul ‖mainTerm t n s‖)
+    (Eventually.of_forall fun u => ?_)).trans ?_
   · have := hpt u
     simpa [sub_mul] using this
   · have hsub : ((fun u : ℝ => Real.exp (κ * u ^ 2 + A) * gauss u) - gauss) =
         fun u => Real.exp (κ * u ^ 2 + A) * gauss u - gauss u := rfl
-    rw [MeasureTheory.integral_const_mul, hsub, MeasureTheory.integral_sub hint3 hint4,
+    rw [MeasureTheory.integral_const_mul, hsub, MeasureTheory.integral_sub hint3 integrable_gauss,
       integral_exp_mul_gauss hκ1, integral_gauss, hmain]
     refine mul_le_mul_of_nonneg_left ?_ (norm_nonneg _)
     rw [epsR]

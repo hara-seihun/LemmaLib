@@ -170,12 +170,9 @@ theorem norm_inv_exp_sub_exp_neg_le_of_fold_strip {u : ℂ} {c : ℝ} (hc1 : c <
 
 theorem norm_cpow_sub_one_le (u s : ℂ) :
     ‖u ^ (s - 1)‖ ≤ ‖u‖ ^ (s.re - 1) * Real.exp (π * |s.im|) := by
-  refine (Complex.norm_cpow_le u (s - 1)).trans ?_
-  rw [sub_re, one_re, sub_im, one_im, sub_zero, div_eq_mul_inv, ← Real.exp_neg]
-  gcongr
-  calc -(arg u * s.im) ≤ |arg u * s.im| := neg_le_abs _
-    _ = |arg u| * |s.im| := abs_mul _ _
-    _ ≤ π * |s.im| := by gcongr; exact Complex.abs_arg_le_pi u
+  have h := norm_cpow_le_exp_pi u (s - 1)
+  rw [sub_re, one_re, sub_im, one_im, sub_zero] at h
+  exact h
 
 theorem norm_exp_neg_pi_I_mul_sq (u : ℂ) :
     ‖cexp (-(π * I * u ^ 2))‖ = Real.exp (2 * π * u.re * u.im) := by
@@ -195,11 +192,23 @@ theorem two_mul_re_mul_im_conj_rsOmega_mul (v : ℂ) :
   simp [Complex.mul_re, Complex.mul_im, rsOmega_re, rsOmega_im]
   linear_combination ((v.im ^ 2 - v.re ^ 2) / 2) * h2
 
+theorem re_add_im_conj_rsOmega_mul_mem {c : ℝ} {v : ℂ}
+    (hv : v.im ∈ Icc 0 (c * (Real.sqrt 2 / 2))) :
+    ((starRingEnd ℂ) ω * v).re + ((starRingEnd ℂ) ω * v).im ∈ Icc 0 c := by
+  rw [re_add_im_conj_rsOmega_mul]
+  have h2 : Real.sqrt 2 * Real.sqrt 2 = 2 := Real.mul_self_sqrt (by norm_num)
+  have hs2 : 0 < Real.sqrt 2 := by positivity
+  constructor
+  · have := hv.1; positivity
+  · calc Real.sqrt 2 * v.im ≤ Real.sqrt 2 * (c * (Real.sqrt 2 / 2)) :=
+          mul_le_mul_of_nonneg_left hv.2 hs2.le
+      _ = c := by linear_combination (c / 2) * h2
+
 theorem foldIntegrand_zero {s : ℂ} (hs : s ≠ 1) : foldIntegrand s 0 = 0 := by
   unfold foldIntegrand
   rw [Complex.zero_cpow (sub_ne_zero.2 hs), zero_mul]
 
-/-- The bound on the reflected integrand on the strip `0 ≤ Im v ≤ c √2 / 2`, `v = ω u`. -/
+/-- The bound on `foldIntegrand s (conj ω * v)` on the strip `0 ≤ Im v ≤ c √2 / 2`. -/
 theorem norm_foldIntegrand_conj_rsOmega_mul_le {s : ℂ} (hs : 2 ≤ s.re) {c : ℝ} (hc1 : c < 1)
     {v : ℂ} (hv : v.im ∈ Icc 0 (c * (Real.sqrt 2 / 2))) :
     ‖foldIntegrand s ((starRingEnd ℂ) ω * v)‖ ≤
@@ -210,14 +219,7 @@ theorem norm_foldIntegrand_conj_rsOmega_mul_le {s : ℂ} (hs : 2 ≤ s.re) {c : 
   · rw [mul_zero, foldIntegrand_zero (fun h => by rw [h] at hs; norm_num at hs), norm_zero]
     positivity
   have hn : 0 < ‖v‖ := norm_pos_iff.2 hv0
-  have hstrip : ((starRingEnd ℂ) ω * v).re + ((starRingEnd ℂ) ω * v).im ∈ Icc 0 c := by
-    rw [re_add_im_conj_rsOmega_mul]
-    have h2 : Real.sqrt 2 * Real.sqrt 2 = 2 := Real.mul_self_sqrt (by norm_num)
-    constructor
-    · have := hv.1; positivity
-    · have := hv.2
-      have hs2 : 0 < Real.sqrt 2 := by positivity
-      nlinarith
+  have hstrip := re_add_im_conj_rsOmega_mul_mem hv
   unfold foldIntegrand
   rw [norm_mul, div_eq_mul_inv, norm_mul, norm_exp_neg_pi_I_mul_sq,
     show 2 * π * ((starRingEnd ℂ) ω * v).re * ((starRingEnd ℂ) ω * v).im =
@@ -410,14 +412,7 @@ theorem differentiableAt_foldIntegrand_conj_rsOmega_mul {s : ℂ} {c : ℝ} (hc1
   have hu0 : (starRingEnd ℂ) ω * v ≠ 0 := by
     refine mul_ne_zero ?_ hv0
     rw [map_ne_zero]; exact rsOmega_ne_zero
-  have hstrip : ((starRingEnd ℂ) ω * v).re + ((starRingEnd ℂ) ω * v).im ∈ Icc 0 c := by
-    rw [re_add_im_conj_rsOmega_mul]
-    have h2 : Real.sqrt 2 * Real.sqrt 2 = 2 := Real.mul_self_sqrt (by norm_num)
-    constructor
-    · have := hv.1; positivity
-    · have := hv.2
-      have hs2 : 0 < Real.sqrt 2 := by positivity
-      nlinarith
+  have hstrip := re_add_im_conj_rsOmega_mul_mem hv
   exact (differentiableAt_foldIntegrand (mem_slitPlane_of_fold_strip hstrip.1 hu0)
     (sin_pi_mul_ne_zero_of_fold_strip hc1 hstrip hu0)).comp v
     ((differentiableAt_id (𝕜 := ℂ)).const_mul _)

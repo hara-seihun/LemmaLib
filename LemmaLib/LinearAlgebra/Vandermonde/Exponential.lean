@@ -27,12 +27,6 @@ private theorem exp_neg_injective {n : ℕ} (t : Fin n → ℝ) (ht : Function.I
   apply ht
   exact neg_injective (Real.exp_injective hij)
 
-/-- The Vandermonde determinant on distinct nodes of the form `exp (-t i)` is nonzero. -/
-theorem det_vandermonde_exp_neg_ne_zero {n : ℕ} (t : Fin n → ℝ)
-    (ht : Function.Injective t) :
-    (vandermonde fun i : Fin n ↦ Real.exp (-t i)).det ≠ 0 := by
-  exact det_vandermonde_ne_zero_iff.mpr (exp_neg_injective t ht)
-
 /-- A linear combination of exponentials with distinct real exponents is zero if it vanishes at the
 first `n` natural numbers, where `n` is the number of terms. -/
 theorem eq_zero_of_sum_mul_exp_neg_eq_zero {n : ℕ} (t c : Fin n → ℝ)

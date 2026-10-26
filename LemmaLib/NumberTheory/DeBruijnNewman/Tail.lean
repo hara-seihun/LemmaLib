@@ -41,14 +41,12 @@ namespace DeBruijnNewman
 
 /-! ### `M₀` along a horizontal line -/
 
-theorem im_axis_add (T τ σ : ℝ) : ((T : ℂ) * I + τ * (σ : ℂ)).im = T := by simp
-
 /-- Second-order Taylor bound for `log M₀` along the horizontal line `Im s = T`. -/
 theorem re_logM₀_horizontal_le {T : ℝ} (hT : 3 < T) (σ : ℝ) :
     (logM₀ ((σ : ℂ) + T * I)).re ≤
       (logM₀ ((T : ℂ) * I)).re + σ * (alpha ((T : ℂ) * I)).re + σ ^ 2 / (4 * T - 12) := by
   set z : ℂ := (T : ℂ) * I with hz
-  have hzim : ∀ τ : ℝ, (z + τ * (σ : ℂ)).im = T := fun τ => im_axis_add T τ σ
+  have hzim : ∀ τ : ℝ, (z + τ * (σ : ℂ)).im = T := fun τ => by rw [hz]; simp
   have hg : ∀ τ ∈ Icc (0 : ℝ) 1, HasDerivAt logM₀ (alpha (z + τ * σ)) (z + τ * σ) :=
     fun τ _ => hasDerivAt_logM₀ (by rw [hzim]; linarith)
   have hα : ∀ τ ∈ Icc (0 : ℝ) 1, HasDerivAt alpha (alpha' (z + τ * σ)) (z + τ * σ) :=
@@ -104,11 +102,6 @@ theorem norm_prefactor_le {s : ℂ} (hs : 0.8 < s.im) :
     ((2 : ℝ) ^ (σ / 2) * Real.exp (lineB c T ^ 2 / (4 * lineA c T)) +
       2 / Real.sqrt 3 * Real.exp (lineB c T ^ 2 / (3 * lineA c T)) *
         Real.exp (σ ^ 2 / (lineA c T * c ^ 2)))
-
-theorem tailK_nonneg (T c σ : ℝ) : 0 ≤ tailK T c σ := by
-  unfold tailK
-  have := Real.sqrt_nonneg (π / lineA c T)
-  positivity
 
 theorem dist_int_of_mem_Icc {c : ℝ} {N : ℕ} (hc : (N : ℝ) + 1 / 4 ≤ c) (hc' : c ≤ N + 3 / 4) :
     ∀ m : ℤ, 1 / 4 ≤ |c - m| := by
@@ -208,11 +201,6 @@ theorem exp_quadratic_mul_gauss (κ L A v : ℝ) :
   congr 2
   ring
 
-theorem integrable_exp_quadratic_mul_gauss {κ : ℝ} (hκ : κ < 1) (L A : ℝ) :
-    Integrable fun v : ℝ => Real.exp (κ * v ^ 2 + L * v + A) * gauss v := by
-  simp_rw [exp_quadratic_mul_gauss]
-  exact (integrable_exp_quadratic (by linarith) L).const_mul _
-
 theorem integral_exp_quadratic_mul_gauss {κ : ℝ} (hκ : κ < 1) (L A : ℝ) :
     ∫ v : ℝ, Real.exp (κ * v ^ 2 + L * v + A) * gauss v =
       Real.exp (A + L ^ 2 / (4 * (1 - κ))) / Real.sqrt (1 - κ) := by
@@ -239,8 +227,8 @@ theorem exp_shift_eq (t σ α β v : ℝ) (ht : 0 ≤ t) :
 theorem integrable_exp_shift_mul_gauss {t β : ℝ} (ht : 0 ≤ t) (hβ : β * t < 1) (σ α : ℝ) :
     Integrable fun v : ℝ =>
       Real.exp (α * (σ + Real.sqrt t * v) + β * (σ + Real.sqrt t * v) ^ 2) * gauss v := by
-  simp_rw [exp_shift_eq t σ α β _ ht]
-  exact integrable_exp_quadratic_mul_gauss hβ _ _
+  simp_rw [exp_shift_eq t σ α β _ ht, exp_quadratic_mul_gauss]
+  exact (integrable_exp_quadratic (by linarith) _).const_mul _
 
 theorem integral_exp_shift_mul_gauss {t β : ℝ} (ht : 0 ≤ t) (hβ : β * t < 1) (σ α : ℝ) :
     ∫ v : ℝ, Real.exp (α * (σ + Real.sqrt t * v) + β * (σ + Real.sqrt t * v) ^ 2) * gauss v =

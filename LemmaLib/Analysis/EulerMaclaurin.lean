@@ -40,13 +40,6 @@ noncomputable def P2 (u : ℝ) : ℂ := ((u : ℂ) ^ 2 - u) / 2 + 1 / 12
 /-- `P3 u = (2u³ - 3u² + u)/12`; `P3' = P2` and `P3 0 = P3 1 = 0`. -/
 noncomputable def P3 (u : ℝ) : ℂ := (2 * (u : ℂ) ^ 3 - 3 * (u : ℂ) ^ 2 + u) / 12
 
-theorem P1_zero : P1 0 = -(1 / 2) := by simp [P1]
-theorem P1_one : P1 1 = 1 / 2 := by simp [P1]; norm_num
-theorem P2_zero : P2 0 = 1 / 12 := by simp [P2]
-theorem P2_one : P2 1 = 1 / 12 := by simp [P2]
-theorem P3_zero : P3 0 = 0 := by simp [P3]
-theorem P3_one : P3 1 = 0 := by simp [P3]; norm_num
-
 theorem hasDerivAt_ofReal_sub (k u : ℝ) :
     HasDerivAt (fun x : ℝ => ((x - k : ℝ) : ℂ)) 1 u :=
   ((hasDerivAt_id u).sub_const k).ofReal_comp
@@ -126,8 +119,10 @@ theorem integral_unit_interval {f f' f'' f''' : ℝ → ℂ} (k : ℝ)
     integral_mul_deriv_eq_deriv_mul (v := fun x => P3 (x - k)) (v' := fun x => P2 (x - k))
       (fun x hx => hf'' x (hI ▸ hx)) (fun x _ => hasDerivAt_P3 k x)
       (hcont.intervalIntegrable_of_Icc hk) (hP2_c.intervalIntegrable _ _)
-  simp only [add_sub_cancel_left, sub_self, P1_zero, P1_one, P2_zero, P2_one, P3_zero, P3_one,
-    mul_one] at h1 h2 h3
+  simp only [add_sub_cancel_left, sub_self, mul_one,
+    (show P1 0 = -(1 / 2) by simp [P1]), (show P1 1 = 1 / 2 by simp [P1]; norm_num),
+    (show P2 0 = 1 / 12 by simp [P2]), (show P2 1 = 1 / 12 by simp [P2]),
+    (show P3 0 = 0 by simp [P3]), (show P3 1 = 0 by simp [P3]; norm_num)] at h1 h2 h3
   rw [h1, h2, h3]
   ring
 

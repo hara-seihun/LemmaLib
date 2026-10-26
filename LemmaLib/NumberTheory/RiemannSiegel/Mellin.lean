@@ -211,12 +211,8 @@ theorem rsIntegral_eq_integral_mordell {s : ℂ} (hs : 0 < s.re) {c : ℝ} (hc0 
 theorem re_rsOmega_mul_ofReal (r : ℝ) : (ω * r).re = Real.sqrt 2 / 2 * r := by
   rw [Complex.re_mul_ofReal, rsOmega_eq]; simp
 
-theorem norm_exp_neg_rsOmega_mul (r : ℝ) :
-    ‖cexp (-(ω * r))‖ = Real.exp (-(Real.sqrt 2 / 2 * r)) := by
-  rw [Complex.norm_exp, neg_re, re_rsOmega_mul_ofReal]
-
 theorem norm_exp_neg_rsOmega_mul_lt_one {r : ℝ} (hr : 0 < r) : ‖cexp (-(ω * r))‖ < 1 := by
-  rw [norm_exp_neg_rsOmega_mul, Real.exp_lt_one_iff]
+  rw [Complex.norm_exp, neg_re, re_rsOmega_mul_ofReal, Real.exp_lt_one_iff]
   have : 0 < Real.sqrt 2 := by positivity
   nlinarith
 
@@ -290,10 +286,6 @@ theorem re_nat_add_one_mul_rsOmega (k : ℕ) : 0 < (((k : ℂ) + 1) * ω).re := 
     re_rsOmega_mul_ofReal]
   positivity
 
-theorem integrableOn_cpow_mul_geomSummand {s : ℂ} (hs : 0 < s.re) (k : ℕ) :
-    IntegrableOn (fun r : ℝ => (r : ℂ) ^ (s - 1) * cexp (-(((k : ℂ) + 1) * ω * r))) (Ioi 0) :=
-  Complex.integrableOn_cpow_mul_exp_neg_mul hs (re_nat_add_one_mul_rsOmega k)
-
 theorem integral_norm_cpow_mul_geomSummand {s : ℂ} (hs : 0 < s.re) (k : ℕ) :
     ∫ r in Ioi (0 : ℝ), ‖(r : ℂ) ^ (s - 1) * cexp (-(((k : ℂ) + 1) * ω * r))‖ =
       (1 / (Real.sqrt 2 / 2)) ^ s.re * ((((k : ℝ) + 1) ^ s.re)⁻¹ * Real.Gamma s.re) := by
@@ -342,7 +334,7 @@ theorem integral_cpow_mul_geomTerm {s : ℂ} (hs : 1 < s.re) :
     intro r hr
     rw [geomTerm_eq_tsum hr, tsum_mul_left]
   rw [setIntegral_congr_fun measurableSet_Ioi e,
-    ← integral_tsum_of_summable_integral_norm (integrableOn_cpow_mul_geomSummand hs0)
+    ← integral_tsum_of_summable_integral_norm (fun k => Complex.integrableOn_cpow_mul_exp_neg_mul hs0 (re_nat_add_one_mul_rsOmega k))
       (summable_integral_norm_cpow_mul_geomSummand hs)]
   simp_rw [integral_cpow_mul_geomSummand hs0]
   rw [tsum_mul_left, zeta_eq_tsum_one_div_nat_add_one_cpow hs]

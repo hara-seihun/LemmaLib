@@ -42,15 +42,11 @@ namespace DeBruijnNewman
 @[fun_prop]
 lemma continuous_gauss : Continuous gauss := by unfold gauss; fun_prop
 
-lemma ofReal_sqrt_pi : ((Real.sqrt π : ℝ) : ℂ) = (π : ℂ) ^ (1 / 2 : ℂ) := by
-  rw [Real.sqrt_eq_rpow, Complex.ofReal_cpow pi_pos.le]
-  push_cast
-  rfl
-
 lemma integral_cexp_neg_sq_add_mul (c : ℂ) :
     ∫ v : ℝ, Complex.exp (-(v : ℂ) ^ 2 + c * v) = (Real.sqrt π : ℂ) * Complex.exp (c ^ 2 / 4) := by
   have := integral_cexp_quadratic (b := -1) (by simp) c 0
-  rw [ofReal_sqrt_pi]
+  rw [show ((Real.sqrt π : ℝ) : ℂ) = (π : ℂ) ^ (1 / 2 : ℂ) by
+    rw [Real.sqrt_eq_rpow, Complex.ofReal_cpow pi_pos.le]; push_cast; rfl]
   rw [show c ^ 2 / 4 = 0 - c ^ 2 / (4 * -1) by ring, show (π : ℂ) = π / -(-1) by ring, ← this]
   congr 1
   ext v

@@ -196,9 +196,6 @@ theorem H_ne_zero_of_lt_norm_f {K : ℝ} (happrox : EffectiveApproximationWith K
 
 /-! ### Derivatives of `alpha` and of the logarithm of `M` -/
 
-theorem mem_slitPlane_of_im_ne_zero {s : ℂ} (h : s.im ≠ 0) : s ∈ slitPlane :=
-  mem_slitPlane_iff.mpr (Or.inr h)
-
 theorem div_two_pi_im (s : ℂ) : (s / (2 * π)).im = s.im / (2 * π) := by
   rw [show (2 * (π : ℂ)) = ((2 * π : ℝ) : ℂ) by push_cast; rfl, Complex.div_ofReal_im]
 
@@ -206,7 +203,7 @@ theorem hasDerivAt_alpha {s : ℂ} (hs : s.im ≠ 0) : HasDerivAt alpha (alpha' 
   have h0 : s ≠ 0 := fun h => hs (by simp [h])
   have h1 : s - 1 ≠ 0 := fun h => hs (by simpa using congrArg Complex.im h)
   have hslit : s / (2 * π) ∈ slitPlane := by
-    apply mem_slitPlane_of_im_ne_zero
+    refine mem_slitPlane_iff.mpr (Or.inr ?_)
     rw [div_two_pi_im]
     exact div_ne_zero hs (by positivity)
   have hA : HasDerivAt (fun s : ℂ => 1 / (2 * s)) (-(1 / (2 * s ^ 2))) s := by
@@ -889,12 +886,5 @@ theorem errAB_le_errABExplicit {t x y : ℝ} (hr : InRegion t x y) :
         / (n : ℝ) ^ reSStarLower t x y * _ := by
         gcongr
     _ = _ := rfl
-
-/-- The nonvanishing test in the form a certificate checks: every quantity in
-`errABExplicit t x y + errC0 t x y` is an explicit real function of `(t, x, y)`. -/
-theorem H_ne_zero_of_lt_norm_f' {K : ℝ} (happrox : EffectiveApproximationWith K) {t x y : ℝ}
-    (hr : InRegion t x y) (hf : errABExplicit t x y + K * errC0 t x y < ‖f t x y‖) :
-    H t (x + y * I) ≠ 0 :=
-  H_ne_zero_of_lt_norm_f happrox hr (by linarith [errAB_le_errABExplicit hr])
 
 end DeBruijnNewman

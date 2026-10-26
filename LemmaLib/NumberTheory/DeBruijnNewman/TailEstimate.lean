@@ -34,15 +34,11 @@ namespace DeBruijnNewman
 
 /-- `exp x ≤ P₇(b)` for `x ≤ b ≤ 1`, with `P₇` the degree-`7` Taylor polynomial plus its
 remainder term. -/
-theorem exp_le_taylor {x b : ℝ} (hx : x ≤ b) (hb0 : 0 ≤ b) (hb1 : b ≤ 1) :
-    Real.exp x ≤ ∑ m ∈ Finset.range 7, b ^ m / m.factorial + b ^ 7 * 8 / (Nat.factorial 7 * 7) := by
-  refine (Real.exp_le_exp.2 hx).trans ((Real.exp_bound' hb0 hb1 (n := 7) (by norm_num)).trans_eq ?_)
-  norm_num
-
 theorem exp_le_of_le {x b q : ℝ} (hx : x ≤ b) (hb0 : 0 ≤ b) (hb1 : b ≤ 1)
     (hq : ∑ m ∈ Finset.range 7, b ^ m / m.factorial + b ^ 7 * 8 / (Nat.factorial 7 * 7) ≤ q) :
-    Real.exp x ≤ q :=
-  (exp_le_taylor hx hb0 hb1).trans hq
+    Real.exp x ≤ q := by
+  refine (Real.exp_le_exp.2 hx).trans ((Real.exp_bound' hb0 hb1 (n := 7) (by norm_num)).trans ?_)
+  exact (le_of_eq (by norm_num)).trans hq
 
 /-! ### `M₀` along the imaginary axis -/
 
@@ -272,17 +268,6 @@ theorem tailIntegral_le {t T c σ : ℝ} (ht : t ≤ 1 / 2) (hT : 100 ≤ T)
 /-- The point of `[N + 1/4, N + 3/4]` nearest to `a`. -/
 @[expose] noncomputable def clampC (N : ℕ) (a : ℝ) : ℝ := max (N + 1 / 4) (min (N + 3 / 4) a)
 
-theorem clampC_ge (N : ℕ) (a : ℝ) : (N : ℝ) + 1 / 4 ≤ clampC N a := le_max_left _ _
-
-theorem clampC_le (N : ℕ) (a : ℝ) : clampC N a ≤ N + 3 / 4 :=
-  max_le (by linarith) (min_le_left _ _)
-
-theorem clampC_le_add {N : ℕ} {a : ℝ} (ha : (N : ℝ) - 0.004 ≤ a) : clampC N a ≤ a + 0.254 :=
-  max_le (by linarith) ((min_le_right _ _).trans (by linarith))
-
-theorem sub_le_clampC {N : ℕ} {a : ℝ} (ha : a < N + 1) : a - 1 / 4 ≤ clampC N a :=
-  le_max_of_le_right (le_min (by linarith) (by linarith))
-
 /-- The geometric inputs of `tailIntegral_le` on the region: with `a = √(x/(4π))`,
 `N = cutoff t x`, `c = clampC N a` and `T = x/2`. -/
 theorem line_params {t x : ℝ} (ht0 : 0 ≤ t) (ht : t ≤ 1 / 2) (hx : 200 ≤ x) :
@@ -306,10 +291,10 @@ theorem line_params {t x : ℝ} (ht0 : 0 ≤ t) (ht : t ≤ 1 / 2) (hx : 200 ≤
     refine (cutoff_le_sqrt t x).trans ?_
     rw [Real.sqrt_le_left (by linarith)]
     nlinarith
-  have hc1 : (cutoff t x : ℝ) + 1 / 4 ≤ c := clampC_ge _ _
-  have hc2 : c ≤ cutoff t x + 3 / 4 := clampC_le _ _
-  have hca : c ≤ a + 0.254 := clampC_le_add (by linarith)
-  have hac : a - 1 / 4 ≤ c := sub_le_clampC haN
+  have hc1 : (cutoff t x : ℝ) + 1 / 4 ≤ c := le_max_left _ _
+  have hc2 : c ≤ cutoff t x + 3 / 4 := max_le (by linarith) (min_le_left _ _)
+  have hca : c ≤ a + 0.254 := max_le (by linarith) ((min_le_right _ _).trans (by linarith))
+  have hac : a - 1 / 4 ≤ c := le_max_of_le_right (le_min (by linarith) (by linarith))
   have hc0 : 3.739 ≤ c := by linarith
   have hcpos : 0 < c := by linarith
   refine ⟨hc1, hc2, hc0, ?_, ?_, ?_⟩
@@ -414,11 +399,5 @@ theorem tailEstimateWith : TailEstimateWith 20 := by
 `x ≥ 200`, `‖H_t(x+iy) - B_t(x+iy) f_t(x+iy)‖ ≤ ‖B_t(x+iy)‖ (errAB + 20 errC0)`. -/
 theorem effectiveApproximationWith : EffectiveApproximationWith 20 :=
   effectiveApproximation_of_tail (by norm_num) tailEstimateWith
-
-/-- The nonvanishing test, unconditionally: on the region, if
-`errABExplicit t x y + 20 errC0 t x y < ‖f t x y‖` then `H t (x + iy) ≠ 0`. -/
-theorem H_ne_zero_of_lt_norm_f'' {t x y : ℝ} (hr : InRegion t x y)
-    (hf : errABExplicit t x y + 20 * errC0 t x y < ‖f t x y‖) : H t (x + y * I) ≠ 0 :=
-  H_ne_zero_of_lt_norm_f' effectiveApproximationWith hr hf
 
 end DeBruijnNewman

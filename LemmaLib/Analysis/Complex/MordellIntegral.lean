@@ -268,10 +268,6 @@ theorem re_mordellExponent_le {τ z w : ℂ} (hτ : 0 < τ.re) {R : ℝ} (hw : �
   rw [hK, h1]
   nlinarith
 
-theorem two_mul_norm_sub_round_le_norm_sin_pi_mul (u : ℂ) :
-    2 * ‖u - (round u.re : ℂ)‖ ≤ ‖Complex.sin (π * u)‖ :=
-  two_mul_norm_sub_le_norm_sin_pi_mul u _ (abs_sub_round u.re)
-
 /-- `mordellS u = u / (exp (π i u) - exp (-π i u))`, with its removable singularity at `0`
 filled in. -/
 @[expose] noncomputable def mordellS (u : ℂ) : ℂ := 1 / (2 * I * sincPi u)
@@ -293,7 +289,7 @@ theorem norm_mordellS_le {u : ℂ} {ρ : ℝ} (hρ : 0 < ρ)
       intro h0
       have := abs_sub_round u.re
       rw [h0] at this; simp at this; exact h (by rw [one_div]; exact this)
-    have h1 := two_mul_norm_sub_round_le_norm_sin_pi_mul u
+    have h1 := two_mul_norm_sub_le_norm_sin_pi_mul u _ (abs_sub_round u.re)
     have h2 := hu (round u.re) hr
     have h3 : 0 < ‖Complex.sin (π * u)‖ := by linarith
     rw [sincPi_of_ne hu0, norm_div]
@@ -358,7 +354,8 @@ theorem norm_mordellIntegrand_line_le {τ z : ℂ} (hτ : 0 < τ.re) {c δ : ℝ
         Real.exp (-(π * τ.re / 2) * x ^ 2) := by
   rw [norm_mordellIntegrand_eq]
   have hsin : Real.sqrt 2 * δ ≤ ‖Complex.sin (π * ((c : ℂ) - ω * x))‖ := by
-    refine le_trans ?_ (two_mul_norm_sub_round_le_norm_sin_pi_mul _)
+    refine le_trans ?_ (two_mul_norm_sub_le_norm_sin_pi_mul _ _
+      (abs_sub_round ((c : ℂ) - ω * x).re))
     refine le_trans ?_ (mul_le_mul_of_nonneg_left (norm_line_sub_ge c x _) zero_le_two)
     have := hc (round ((c : ℂ) - ω * x).re)
     nlinarith [Real.sqrt_nonneg 2]
@@ -381,7 +378,8 @@ theorem mordell_denom_line_ne_zero {c : ℝ} (hc : ∀ n : ℤ, c ≠ n) (x : �
     rw [exp_sub_exp_neg_eq_two_I_sin]
     refine mul_ne_zero (by simp) ?_
     rw [← norm_pos_iff]
-    have h1 := two_mul_norm_sub_round_le_norm_sin_pi_mul ((c : ℂ) - ω * x)
+    have h1 := two_mul_norm_sub_le_norm_sin_pi_mul ((c : ℂ) - ω * x) _
+      (abs_sub_round ((c : ℂ) - ω * x).re)
     have h2 := norm_line_sub_ge c x (round ((c : ℂ) - ω * x).re)
     push_cast at h2
     have h3 := dist_round_pos hc

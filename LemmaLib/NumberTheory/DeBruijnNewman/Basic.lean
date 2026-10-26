@@ -51,8 +51,4 @@ noncomputable def H (t : ℝ) (z : ℂ) : ℂ :=
 def OnlyRealZeros (t : ℝ) : Prop :=
   ∀ z : ℂ, H t z = 0 → z.im = 0
 
-/-- `U` is an upper bound for the de Bruijn–Newman constant. -/
-def IsUpperBound (U : ℝ) : Prop :=
-  ∀ t : ℝ, U ≤ t → OnlyRealZeros t
-
 end DeBruijnNewman

@@ -29,8 +29,3 @@ theorem HasDerivAt.eq_zero_of_even {f : ℝ → ℝ} {f' : ℝ} (hf : HasDerivAt
     exact heven x
   rw [hsame] at hneg
   linarith [hf.unique hneg]
-
-/-- An even real function differentiable at the origin has derivative zero there. -/
-theorem Function.Even.deriv_zero {f : ℝ → ℝ} (heven : Function.Even f)
-    (hf : DifferentiableAt ℝ f 0) : deriv f 0 = 0 :=
-  hf.hasDerivAt.eq_zero_of_even heven

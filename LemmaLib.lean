@@ -7,7 +7,6 @@ module
 
 public import LemmaLib.Algebra.BigOperators.FiniteDifference
 public import LemmaLib.Algebra.Group.Hom.Idempotent
-public import LemmaLib.Algebra.Polynomial.Reflection
 public import LemmaLib.Analysis.Asymptotics.WeightedCesaro
 public import LemmaLib.Analysis.Calculus.Even
 public import LemmaLib.Analysis.Calculus.ZeroIsolation
@@ -17,11 +16,7 @@ public import LemmaLib.Analysis.Complex.RiemannSiegelLine
 public import LemmaLib.Analysis.EulerMaclaurin
 public import LemmaLib.Analysis.SpecialFunctions.Gamma.ComplexScale
 public import LemmaLib.Analysis.SpecialFunctions.Gamma.Stirling
-public import LemmaLib.Data.Nat.Choose.Two
-public import LemmaLib.GroupTheory.Abelianization.Conjugation
 public import LemmaLib.GroupTheory.Perm.TwoClosure
-public import LemmaLib.GroupTheory.SemidirectProduct
-public import LemmaLib.LinearAlgebra.Matrix.FinTwo
 public import LemmaLib.LinearAlgebra.Matrix.SkewSymmetric
 public import LemmaLib.LinearAlgebra.Vandermonde.Exponential
 public import LemmaLib.Logic.Function.Idempotent

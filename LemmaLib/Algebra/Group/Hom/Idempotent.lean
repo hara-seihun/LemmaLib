@@ -25,21 +25,4 @@ theorem map_eq_zero_of_add_eq_self {M N : Type*} [AddMonoid M] [AddLeftCancelMon
   apply add_left_cancel (a := f x)
   simpa only [map_add, add_zero] using congrArg f hx
 
-/-- A biadditive map into a left-cancellative additive monoid vanishes when its first argument is an
-additive idempotent. -/
-theorem map_apply_eq_zero_of_add_eq_self {M N P : Type*} [AddMonoid M] [AddMonoid N]
-    [AddCancelCommMonoid P] (B : M →+ N →+ P) {x : M} (hx : x + x = x) (y : N) :
-    B x y = 0 := by
-  apply add_eq_right.mp
-  calc
-    B x y + B x y = B (x + x) y := by rw [map_add, AddMonoidHom.add_apply]
-    _ = B x y := by rw [hx]
-
-/-- A biadditive map into a left-cancellative additive monoid vanishes when its second argument is
-an additive idempotent. -/
-theorem apply_map_eq_zero_of_add_eq_self {M N P : Type*} [AddMonoid M] [AddMonoid N]
-    [AddCancelCommMonoid P] (B : M →+ N →+ P) (x : M) {y : N} (hy : y + y = y) :
-    B x y = 0 :=
-  (B x).map_eq_zero_of_add_eq_self hy
-
 end AddMonoidHom

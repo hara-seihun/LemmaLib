@@ -380,10 +380,6 @@ theorem M_sMinus_eq (t x y : ℝ) (hx : x ≠ 0) :
     show ((1 + y - x * I) / 2 : ℂ) = sPlus x y from rfl]
   exact (mul_div_cancel₀ _ hB).symm
 
-theorem norm_mainTerm_sPlus (t x y : ℝ) {n : ℕ} (hn : 0 < n) :
-    ‖mainTerm t n (sPlus x y)‖ = ‖M t (sPlus x y)‖ * b t n / (n : ℝ) ^ (sStar t x y).re :=
-  norm_mainTerm t hn _
-
 theorem norm_mainTerm_sMinus (t x y : ℝ) {n : ℕ} (hn : 0 < n) (hx : x ≠ 0) :
     ‖mainTerm t n (sMinus x y)‖ = ‖gamma t x y‖ * ‖M t (sPlus x y)‖ * b t n /
       (n : ℝ) ^ ((sStar t x y).re + (kappa t x y).re - y) := by
@@ -430,7 +426,7 @@ theorem termB_le (hR : RtnEstimate) {t x y : ℝ} (hr : InRegion t x y) {n : ℕ
   have hnorm : ‖mainTerm t n ((starRingEnd ℂ) (sPlus x y))‖ =
       ‖M t (sPlus x y)‖ * b t n / (n : ℝ) ^ (sStar t x y).re := by
     rw [← Complex.norm_conj, ← mainTerm_sPlus_eq_conj t x y n hx0]
-    exact norm_mainTerm_sPlus t x y hn0
+    exact norm_mainTerm t hn0 _
   rw [hnorm]
   have heps : epsR t n ((starRingEnd ℂ) (sPlus x y)) ≤
       Real.exp ((t ^ 2 / 16 * Real.log (x / (4 * π * (n : ℝ) ^ 2)) ^ 2 + 0.626) / (x - 6.66)) -

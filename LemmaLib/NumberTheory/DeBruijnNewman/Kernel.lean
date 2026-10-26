@@ -240,8 +240,6 @@ lemma phi_eq (u : ℝ) : phi u = (W'' u - W u) / 8 := by
 /-- The dominating function `e^{9u} e^{-(π/2) e^{4u}}`. -/
 noncomputable def g (u : ℝ) : ℝ := Real.exp (9 * u) * Real.exp (-(π / 2) * Real.exp (4 * u))
 
-lemma g_pos (u : ℝ) : 0 < g u := by unfold g; positivity
-
 /-- Polynomial weight in the termwise bounds. -/
 noncomputable def P (n : ℕ) : ℝ :=
   1 + 24 * π * ((n : ℝ) + 1) ^ 2 + 16 * π ^ 2 * ((n : ℝ) + 1) ^ 4
